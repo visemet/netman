@@ -6,6 +6,33 @@ class Port:
     Builder for Port instances.
     """
 
+    def __init__(self, window_size=1):
+        """
+        Creates a Port instance with the specified window size.
+        """
+
+        self.window(window_size)
+
+    def window(self, size=None):
+        """
+        window()     -> returns the window size
+
+        window(size) -> sets the window size as the specified value
+        """
+
+        if size is None:
+            return self._window_size
+
+        # Checks that size is an int
+        if not isinstance(size, int):
+            raise TypeError, 'window size must be an int'
+
+        # Checks that size is positive
+        elif size <= 0:
+            raise ValueError, 'window size must be positive'
+
+        self._window_size = size
+
     def in_queue(self, queue=None):
         """
         in_queue()      -> returns the queue for storing incoming
