@@ -16,7 +16,10 @@ class Link:
         if delay is None:
             return self._delay
 
-        # TODO: Check delay isinstance(float)
+        # Checks that delay is a float
+        if not isinstance(delay, float):
+            raise TypeError, 'delay must be a float'
+
         self._delay = delay
         return self
 
@@ -31,7 +34,10 @@ class Link:
         if rate is None:
             return self._rate
 
-        # TODO: Check delay isinstance(float)
+        # Checks that rate is a float
+        if not isinstance(rate, float):
+            raise TypeError, 'rate must be a float'
+
         self._rate = rate
         return self
 
@@ -46,7 +52,10 @@ class Link:
         if source is None:
             return self._source
 
-        # TODO: Check source isinstance(device.Device)
+        # Checks that source is a Device instance
+        if not isinstance(source, Device):
+            raise TypeError, 'source must be a Device instance'
+
         self._source = source
         return self
 
@@ -62,6 +71,9 @@ class Link:
         if destination is None:
             return self._destination
 
-        # TODO: Check destination isinstance(device.Device)
+        # Checks that destination is a Device instance
+        if not isinstance(destination, Device):
+            raise TypeError, 'destination must be a Device instance'
+
         self._destination = destination
         return self
