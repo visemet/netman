@@ -1,48 +1,83 @@
+from collections import deque
+from link import Link
+
 class Port:
     """
+    Builder for Port instances.
     """
 
-    def __init__(self, in_queue, out_queue, in_link, out_link):
+    def in_queue(self, queue=None):
         """
-        Creates a Port instance with the specified queues and links.
-        """
+        in_queue()      -> returns the queue for storing incoming
+                           packets
 
-        # TODO: Check in_queue isinstance(collections.deque)
-        self._in_queue = in_queue
-
-        # TODO: Check out_queue isinstance(collections.deque)
-        self._out_queue = out_queue
-
-        # TODO: Check in_link isinstance(link.Link)
-        self._in_link = in_link
-
-        # TODO: Check out_link isinstance(link.Link)
-        self._out_link = out_link
-
-    def in_queue(self):
-        """
-        Returns the queue storing incoming packets.
+        in_queue(queue) -> sets the queue as the specified value and
+                           returns this instance
         """
 
-        return self._in_queue
+        if queue is None:
+            return self._in_queue
 
-    def out_queue(self):
-        """
-        Returns the queue storing outgoing packets.
-        """
+        # Checks that queue is a deque
+        if not isinstance(queue, deque):
+            raise TypeError, 'queue must be a deque'
 
-        return self._out_queue
+        self._in_queue = queue
+        return self
 
-    def in_link(self):
+    def out_queue(self, queue=None):
         """
-        Returns the link by which incoming packets are received.
-        """
+        out_queue()      -> returns the queue for storing outgoing
+                            packets
 
-        return self._in_link
-
-    def out_link(self):
-        """
-        Returns the link by which outgoing packets are sent.
+        out_queue(queue) -> sets the queue as the specified value and
+                            returns this instance
         """
 
-        return self._out_link
+        if queue is None:
+            return self._out_queue
+
+        # Checks that queue is a deque
+        if not isinstance(queue, deque):
+            raise TypeError, 'queue must be a deque'
+
+        self._out_queue = queue
+        return self
+
+    def in_link(self, link=None):
+        """
+        in_link()     -> returns the link by which incoming packets are
+                         received
+
+        in_link(link) -> sets the link as the specified value and
+                         returns this instance
+        """
+
+        if link is None:
+            return self._in_link
+
+        # Checks that link is a Link instance
+        if not isinstance(link, Link):
+            raise TypeError, 'link must be a Link instance'
+
+        self._in_link = link
+        return self
+
+    def out_link(self, link=None):
+        """
+        out_link()     -> returns the link by which outgoing packets
+                          are sent
+
+        out_link(link) -> sets the link as the specified value and
+                          returns this instance
+        """
+
+        if link is None:
+            return self._out_link
+
+        # Checks that link is a Link instance
+        if not isinstance(link, Link):
+            raise TypeError, 'link must be a Link instance'
+
+        self._out_link = link
+        return self
