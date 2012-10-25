@@ -1,4 +1,5 @@
 from device import Device
+from port import Port
 
 class Router(Device):
     """
@@ -20,15 +21,18 @@ class Router(Device):
         Adds the specified port to the set of ports.
         """
 
-        # TODO: Check port isinstance(port.Port)
-        self._port.add(port)
+        # Checks that port is a Port instance
+        if not isinstance(port, Port):
+            raise TypeError, 'port must be a Port instance'
+
+        self._ports.add(port)
 
     def neighbors(self):
         """
         Returns the directly connected routers as a set.
         """
 
-        raise NotImplementedError('Router.neighbors()')
+        return set(port.out_link().destination() for port in self._ports)
 
     # Overrides Device.initialize()
     def initialize(self):
@@ -36,7 +40,7 @@ class Router(Device):
         Initializes the router.
         """
 
-        raise NotImplementedError('Router.initialize()')
+        raise NotImplementedError, 'Router.initialize()'
 
     # Overrides Device.send(packet)
     def send(self, packet):
@@ -44,7 +48,7 @@ class Router(Device):
         Sends the specified packet.
         """
 
-        raise NotImplementedError('Router.send(packet)');
+        raise NotImplementedError, 'Router.send(packet)'
 
     # Overrides Device.process(event)
     def process(self, event):
@@ -52,4 +56,4 @@ class Router(Device):
         Processes the specified event.
         """
         
-        raise NotImplementedError('Router.process(event)')   
+        raise NotImplementedError, 'Router.process(event)'
