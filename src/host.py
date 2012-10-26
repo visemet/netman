@@ -1,5 +1,6 @@
 from device import Device
 from flow import Flow
+from port import Port
 from router import Router
 
 class Host(Device):
