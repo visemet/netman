@@ -1,10 +1,10 @@
-from host import Host
+from device import Device
 
 class Flow:
     """
     """
 
-    def __init__(num_bits, start_time, destination, algorithm):
+    def __init__(self, num_bits, start_time, destination, algorithm):
         """
         Creates a Flow instance with the specified number of bits,
         start time, destination, and algorithm.
@@ -61,9 +61,9 @@ class Flow:
         if destination is None:
             return self._destination
 
-        # Checks that destination is a Host instance
-        if not isinstance(destination, Host):
-            raise TypeError, 'destination must be a Host instance'
+        # Checks that destination is a Device instance
+        if not isinstance(destination, Device):
+            raise TypeError, 'destination must be a Device instance'
 
         self._destination = destination
 
