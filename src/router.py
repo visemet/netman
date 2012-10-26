@@ -1,5 +1,6 @@
 from device import Device
 from port import Port
+from routing.algorithm import RoutingAlgorithm
 
 class Router(Device):
     """
@@ -10,11 +11,13 @@ class Router(Device):
         Creates a Router instance with the specified algorithm.
         """
 
-        # TODO: Check algorithm isinstance(routing.algorithm.Algorithm)
+        # Checks that algorithm is a RoutingAlgorithm instance
+        if not isinstance(algorithm, RoutingAlgorithm):
+            raise TypeError, 'algorithm must be a RoutingAlgorithm instance'
+
         self._algorithm = algorithm
 
         self._ports = set()
-        self._routing_table = dict()
 
     def enable(self, port):
         """
@@ -40,7 +43,7 @@ class Router(Device):
         Initializes the router.
         """
 
-        raise NotImplementedError, 'Router.initialize()'
+        self._algorithm.initialize(self)
 
     # Overrides Device.send(packet)
     def send(self, packet):
