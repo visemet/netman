@@ -11,6 +11,14 @@ class RoutingAlgorithm:
 
         raise NotImplementedError, 'Algorithm.initialize(router)'
 
+    def next(self, device):
+        """
+        Returns the port used to reach the specified device.
+        Implemented in each subclass.
+        """
+
+        raise NotImplementedError, 'Algorithm.next(device)'
+
     def update(self, packet):
         """
         Updates the routing algorithm using the specified packet.
