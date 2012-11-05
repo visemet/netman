@@ -6,6 +6,8 @@ class BellmanFord(RoutingAlgorithm):
     """
     """
 
+    _COSTS = 'costs'
+
     # Overrides Algorithm.initialize(router)
     def initialize(self, router):
         """
@@ -47,6 +49,32 @@ class BellmanFord(RoutingAlgorithm):
     def update(self, packet):
         """
         Updates the routing algorithm using the specified packet.
+        Returns True if the cost and routing information was changed
+            as a result of the specified packet, and False otherwise.
         """
 
-        raise NotImplementedError, 'BellmanFord.update(packet)'
+        # TODO: verify the destination of the specified packet
+
+        changed = False
+
+        next = packet.source() # from reference point of this instance
+        next_cost = self._costs[next] # TODO: handle when no cost exists
+
+        costs = packet.datum(_COSTS) # TODO: handle when no data found
+
+        # Iterates through each destination and cost from the packet data
+        for (destination, cost) in costs.iteritems():
+            overall_cost = cost + next_cost
+            current_cost = self._costs.get(destination, -1)
+
+            # Checks whether new or better route found
+            if current_cost == -1 or overall_cost < current_cost:
+                # Updates cost to destination
+                self._costs[destination] = overall_cost
+
+                # Updates routing table to destination
+                self._routing_table[destination] = self._routing_table[next]
+
+                changed = True
+
+        return changed
