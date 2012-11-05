@@ -23,6 +23,24 @@ class Link:
         self._delay = delay
         return self
 
+    def cost(self, cost=None):
+        """
+        cost()     -> returns the cost
+
+        cost(cost) -> sets the cost as the specified value and
+                      returns this instance
+        """
+
+        if cost is None:
+            return self._cost
+
+        # Checks that cost is an int
+        if not isinstance(cost, int):
+            raise TypeError, 'delay must be an int'
+
+        self._cost = cost
+        return self
+
     def rate(self, rate=None):
         """
         rate()     -> returns the rate
