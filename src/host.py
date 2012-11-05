@@ -7,19 +7,27 @@ class Host(Device):
     """
     """
 
-    def __init__(self, port):
+    def __init__(self, port=None):
         """
         Creates a Host instance with the specified port.
         """
 
-        # Checks that port is a Port instance
-        if not isinstance(port, Port):
-            raise TypeError, 'port must be a Port instance'
+        
+        # Initialize the port to None for purposes of setup
 
         self._port = port
 
         self._flows = set()
 
+    def port(self, port):
+        # Checks that port is a Port instance
+        '''
+        Adds the port
+        '''
+        if not isinstance(port, Port):
+            raise TypeError, 'port must be a Port instance'
+        self._port = port
+    
     def connect(self, flow):
         """
         Adds the specified flow to the set of flows.
