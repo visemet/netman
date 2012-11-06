@@ -1,4 +1,5 @@
 from collections import deque
+from device import Device
 from link import Link
 
 class Port:
@@ -32,6 +33,24 @@ class Port:
             raise ValueError, 'window size must be positive'
 
         self._window_size = size
+
+    def device(self, device=None):
+        """
+        device()       -> returns the device
+
+        device(device) -> sets the device as the specified value and
+                          returns this instance
+        """
+
+        if device is None:
+            return self._device
+
+        # Checks that device is a Device instance
+        if not isinstance(device, Device):
+            raise TypeError, 'device must be a Device instance'
+
+        self._device = device
+        return self
 
     def in_queue(self, queue=None):
         """
