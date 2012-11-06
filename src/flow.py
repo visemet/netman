@@ -1,4 +1,5 @@
 from device import Device
+from flowTracker import FlowTracker
 
 class Flow:
     """
@@ -14,7 +15,14 @@ class Flow:
         self.schedule(start_time)
         self.destination(destination)
         self.algorithm(algorithm)
+        self.tracker(FlowTracker())
 
+    def getTracker(self):
+        '''
+        return the flowTracker instance
+        '''
+        return self.tracker
+    
     def bits(self, num=None):
         """
         bits()    -> returns the number of bits

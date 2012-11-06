@@ -23,6 +23,7 @@ import port
 import link
 import host
 import flow 
+import simulation
 
 if __name__=="__main__":
     # read index file to determine device types
@@ -32,13 +33,12 @@ if __name__=="__main__":
     inputType = -1
     '''
     defines the type of classes that we are currently looking at
-    0 = source hosts
-    1 = destination hosts
-    2 = routers
-    3 = links
-    4 = flows
-    5 = links to measure #TODO
-    6 = flows to measure #TODO
+    0 = hosts
+    1 = routers
+    2 = links
+    3 = flows
+    4 = links to measure #TODO
+    5 = flows to measure #TODO
     '''
     
     inputfile = open("configs/test.cfg")
@@ -51,41 +51,36 @@ if __name__=="__main__":
             a1 = routing.static.Static() #TODO: non-static algorithm
             newhost = host.Host(a1)
             devices[str(line.rstrip('\n'))] = newhost
-            print "source host " + str(line)
+            print "host " + str(line.rstrip('\n'))
         elif inputType == 1:
-            a1 = routing.static.Static() #TODO: non-static algorithm
-            newhost = host.Host(a1)
-            devices[str(line.rstrip('\n'))] = newhost
-            print "dest host " + str(line)
-        elif inputType == 2:
             a1 = routing.static.Static() #TODO: non-static algorithm
             newrouter = router.Router(a1)
             devices[str(line.rstrip('\n'))] = newrouter
-            print "router " + str(line)
-        elif inputType == 3:
+            print "router " + str(line.rstrip('\n'))
+        elif inputType == 2:
             info = line.rstrip('\n').split(' ')
             #create a link of the appropriate size between the two devices
             #create the link going the other direction as well
-            link1 = link.Link().source(devices[str(info[0])]).destination(devices[info[1]]).rate(float(info[2]))
+            link1 = link.Link().initTracker().source(devices[str(info[0])]).destination(devices[info[1]]).rate(float(info[2]))
             print "link src: " + str(info[0]) + " dest:" + str(info[1]) + " rate:" + str(info[2])
-            link2 = link.Link().source(devices[info[1]]).destination(devices[info[0]]).rate(float(info[2]))
+            link2 = link.Link().initTracker().source(devices[info[1]]).destination(devices[info[0]]).rate(float(info[2]))
             print "link src: " + str(info[1]) + " dest:" + str(info[0]) + " rate:" + str(info[2])
             newport = port.Port().in_link(link1).out_link(link2)
             print "port between links"
-        elif inputType == 4:
+        elif inputType == 3:
             info = line.rstrip('\n').split(' ')
             #TODO: congestion algorithm
             #flow.Flow(int(info[2]), float(info[3]), devices[info[1]], None)
             print "flow destination: " + str(info[1]) + " bits: " + str(info[2]) \
                 + " start time: " + str(info[3])
-        elif inputType == 5:
+        elif inputType == 4:
             info = line.rstrip('\n').split(' ')
-        elif inputType == 6:
+        elif inputType == 5:
             info = line.rstrip('\n').split(' ')
         else:
             print "Error - unrecognized input"
             exit()
-
+    simulate()
 '''    
 a1 = routing.static.Static()
 a2 = routing.static.Static()

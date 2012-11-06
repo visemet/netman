@@ -1,10 +1,24 @@
 from device import Device
+from linkTracker import LinkTracker
 
 class Link:
     """
     Builder for Link instances.
     """
 
+    def initTracker(self):
+        '''
+        initialize the linkTracker
+        '''
+        self._tracker = LinkTracker()
+        return self
+    
+    def getTracker(self):
+        '''
+        return the linkTracker instance
+        '''
+        return self._tracker
+    
     def delay(self, delay=None):
         """
         delay()      -> returns the delay
