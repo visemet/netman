@@ -1,5 +1,6 @@
 from algorithm import RoutingAlgorithm
 from device import Device
+from packet import Packet
 from router import Router
 
 class BellmanFord(RoutingAlgorithm):
@@ -7,6 +8,25 @@ class BellmanFord(RoutingAlgorithm):
     """
 
     _COSTS = 'costs'
+
+    def _notify(self):
+        """
+        """
+
+        packets = []
+
+        source = self._router
+        for port in source._ports: # TODO: change to use proper accessor
+            link = port.out_link()
+            destination = link.destination()
+
+            packet = Packet().source(source) \
+                             .destination(destination) \
+                             .datum(BellmanFord._COSTS, self._costs)
+
+            packets.append(packet)
+
+        return packets
 
     # Overrides Algorithm.initialize(router)
     def initialize(self, router):
@@ -17,6 +37,8 @@ class BellmanFord(RoutingAlgorithm):
         # Checks that router is a Router instance
         if not isinstance(router, Router):
             raise TypeError, 'router must be a Router instance'
+
+        self._router = router
 
         self._costs = {}
         self._routing_table = {}
@@ -29,9 +51,8 @@ class BellmanFord(RoutingAlgorithm):
             self._costs[destination] = cost
             self._routing_table[destination] = port
 
-        # TODO: create set of packets with costs to send to neighbors
-
-        # TODO: wrap packets in events schedule for time zero
+        # Create set of packets with costs to send to neighbors
+        return self._notify()
 
     # Overrides Algorithm.next(device)
     def next(self, device):
@@ -60,7 +81,7 @@ class BellmanFord(RoutingAlgorithm):
         next = packet.source() # from reference point of this instance
         next_cost = self._costs[next] # TODO: handle when no cost exists
 
-        costs = packet.datum(_COSTS) # TODO: handle when no data found
+        costs = packet.datum(BellmanFord._COSTS) # TODO: handle when no data found
 
         # Iterates through each destination and cost from the packet data
         for (destination, cost) in costs.iteritems():
