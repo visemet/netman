@@ -3,6 +3,17 @@ class Device:
     Base class for routers and hosts.
     """
 
+    def __init__(self, identifier):
+        """
+        Creates a device instance with the specified identifier.
+        """
+
+        # Checks that identifier is a string
+        if not isinstance(identifier, str):
+            raise TypeError, 'identifier must be a string'
+
+        self.id = identifier
+
     def initialize(self):
         """
         Initializes the device. Implemented in each subclass.

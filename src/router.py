@@ -4,12 +4,16 @@ from routing.algorithm import RoutingAlgorithm
 
 class Router(Device):
     """
+    Builder for Router instances.
     """
 
-    def __init__(self, algorithm):
+    def __init__(self, algorithm, identifier):
         """
-        Creates a Router instance with the specified algorithm.
+        Creates a Router instance with the specified algorithm and the
+        specified identifier.
         """
+
+        Device.__init__(self, identifier)
 
         # Checks that algorithm is a RoutingAlgorithm instance
         if not isinstance(algorithm, RoutingAlgorithm):
@@ -58,5 +62,5 @@ class Router(Device):
         """
         Processes the specified event.
         """
-        
+
         raise NotImplementedError, 'Router.process(event)'

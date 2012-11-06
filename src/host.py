@@ -5,27 +5,28 @@ from router import Router
 
 class Host(Device):
     """
+    Builder for Host instances.
     """
 
-    def __init__(self, port=None):
+    def __init__(self, identifier):
         """
-        Creates a Host instance with the specified port.
+        Creates a Host instance with the specified port and the
+        specified identifier.
         """
 
-        
-        # Initialize the port to None for purposes of setup
-
-        self._port = port
+        Device.__init__(self, identifier)
 
         self._flows = set()
 
     def port(self, port):
+        """
+        Replaces the port with the specified value.
+        """
+
         # Checks that port is a Port instance
-        '''
-        Adds the port
-        '''
         if not isinstance(port, Port):
             raise TypeError, 'port must be a Port instance'
+
         self._port = port
     
     def connect(self, flow):
