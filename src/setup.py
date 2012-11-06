@@ -41,21 +41,20 @@ if __name__=="__main__":
     5 = flows to measure #TODO
     '''
     
-    inputfile = open("configs/test.cfg")
+    inputfile = open("configs/demo.cfg")
     devices = {}
     for line in inputfile:
         if line[0] == '#':      # skip commented lines
             inputType += 1
             continue    
         if inputType == 0:      # source host
-            a1 = routing.static.Static() #TODO: non-static algorithm
-            newhost = host.Host(a1)
-            devices[str(line.rstrip('\n'))] = newhost
-            print "host " + str(line.rstrip('\n'))
+            newhost = host.Host(line.rstrip('\n'))
+            devices[line.rstrip('\n')] = newhost
+            print "host " + line.rstrip('\n')
         elif inputType == 1:
             a1 = routing.static.Static() #TODO: non-static algorithm
-            newrouter = router.Router(a1)
-            devices[str(line.rstrip('\n'))] = newrouter
+            newrouter = router.Router(a1, line.rstrip('\n'))
+            devices[line.rstrip('\n')] = newrouter
             print "router " + str(line.rstrip('\n'))
         elif inputType == 2:
             info = line.rstrip('\n').split(' ')
@@ -66,7 +65,9 @@ if __name__=="__main__":
             link2 = link.Link().initTracker().source(devices[info[1]]).destination(devices[info[0]]).rate(float(info[2]))
             print "link src: " + str(info[1]) + " dest:" + str(info[0]) + " rate:" + str(info[2])
             newport = port.Port().in_link(link1).out_link(link2)
-            print "port between links"
+            newport2 = port.Port().in_link(link2).out_link(link1)
+            print "port between links " + str(info[0]) + " " + str(info[1])
+            print "port between links "+ str(info[1]) + " " + str(info[0])
         elif inputType == 3:
             info = line.rstrip('\n').split(' ')
             #TODO: congestion algorithm
@@ -82,7 +83,7 @@ if __name__=="__main__":
             exit()
             
     # begin the simulation with the setup devices
-    simulate(devices)
+    #simulation.Simulate(devices)
 '''    
 a1 = routing.static.Static()
 a2 = routing.static.Static()
