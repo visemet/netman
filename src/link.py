@@ -37,23 +37,12 @@ class Link:
         self._delay = delay
         return self
 
-    def cost(self, cost=None):
+    def cost(self):
         """
-        cost()     -> returns the cost
-
-        cost(cost) -> sets the cost as the specified value and
-                      returns this instance
+        Returns the static component of the cost.
         """
 
-        if cost is None:
-            return self._cost
-
-        # Checks that cost is an int
-        if not isinstance(cost, int):
-            raise TypeError, 'delay must be an int'
-
-        self._cost = cost
-        return self
+        return self.delay() # TODO: + average queuing delay
 
     def rate(self, rate=None):
         """
