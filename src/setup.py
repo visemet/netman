@@ -80,7 +80,9 @@ if __name__=="__main__":
         else:
             print "Error - unrecognized input"
             exit()
-    simulate()
+            
+    # begin the simulation with the setup devices
+    simulate(devices)
 '''    
 a1 = routing.static.Static()
 a2 = routing.static.Static()
