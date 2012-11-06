@@ -62,39 +62,38 @@ class Link:
         self._rate = rate
         return self
 
-    def source(self, source=None):
+    def source(self, port=None):
         """
-        source()       -> returns the source
+        source()     -> returns the source port
 
-        source(source) -> sets the source as the specified value and
-                          returns this instance
+        source(port) -> sets the source port as the specified value
+                        and returns this instance
         """
 
-        if source is None:
+        if port is None:
             return self._source
 
-        # Checks that source is a Device instance
-        if not isinstance(source, Device):
-            raise TypeError, 'source must be a Device instance'
+        # Checks that port is a Port instance
+        if not isinstance(port, Port):
+            raise TypeError, 'port must be a Port instance'
 
-        self._source = source
+        self._source = port
         return self
 
-    def destination(self, destination=None):
+    def destination(self, port=None):
         """
-        destination()            -> returns the destination
+        destination()     -> returns the destination port
 
-        destination(destination) -> sets the destination as the
-                                    specified value and returns this
-                                    instance
+        destination(port) -> sets the destination port as the specified
+                             value and returns this instance
         """
 
-        if destination is None:
+        if port is None:
             return self._destination
 
-        # Checks that destination is a Device instance
-        if not isinstance(destination, Device):
-            raise TypeError, 'destination must be a Device instance'
+        # Checks that port is a Port instance
+        if not isinstance(port, Port):
+            raise TypeError, 'port must be a Port instance'
 
-        self._destination = destination
+        self._destination = port
         return self
