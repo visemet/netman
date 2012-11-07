@@ -24,7 +24,7 @@ class Simulation:
 
         # Iterates through each device
         for device in self._devices:
-            Initializes each device
+            # Initializes each device
             events = device.initialize()
 
             for event in events:
