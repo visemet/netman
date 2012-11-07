@@ -1,4 +1,5 @@
 from device import Device
+from event import Event
 from port import Port
 from routing.algorithm import RoutingAlgorithm
 
@@ -72,6 +73,7 @@ class Router(Device):
 
         events = []
 
+        time = event.schedule()
         port = event.port()
 
         # Processes all received packets
@@ -79,10 +81,16 @@ class Router(Device):
             packet = port.in_queue().popleft() # append right, pop left
 
             # TODO: handle hello packet
-            events.extend(self._algorithm.update(packet))
+            if packet.has(self._algorithm._TYPE):
+                update_ports = self._algorithm.update(packet)
+                for update_port in update_ports:
+                    update_event = Event(time, port)
+                    events.append(update_event)
 
             # TODO: otherwise, forward packet onward
             #       (place in outgoing queue)
+            else:
+                port.out_queue().append(packet) # append right, pop left
 
         # Processes at most one outgoing packet
         if port.out_queue():
@@ -92,5 +100,11 @@ class Router(Device):
 
             # TODO: forward packet onward
             #       (place in incoming queue of next hop)
+            link = port.out_link()
+            delay = link.delay()
+            destination = link.destination()
+
+            spawned_event = Event(time + delay, destination)
+            events.append(spawned_event)
 
         return events
