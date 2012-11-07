@@ -5,7 +5,10 @@ class Event:
     Builder for Event instances.
     """
 
-    def __init__(self, time, port):
+    _SEND = 'send'
+    _RECEIVE = 'receive'
+
+    def __init__(self, time, port, action):
         """
         Creates an Event instance with the specified time and the
         specified port.
@@ -13,6 +16,7 @@ class Event:
 
         self.schedule(time)
         self.port(port)
+        self.action(action)
 
     def __lt__(self, other):
         """
@@ -91,3 +95,19 @@ class Event:
             raise TypeError, 'port must a Port instance'
 
         self._port = port
+
+    def action(self, action=None):
+        """
+        action()       -> returns the action
+
+        action(action) -> sets the action as the specified value
+        """
+
+        if action is None:
+            return self._action
+
+        # Checks that action is a string
+        if not isinstance(action, str):
+            raise TypeError, 'action must a string'
+
+        self._action = action

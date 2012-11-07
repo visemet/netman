@@ -60,7 +60,7 @@ class Router(Device):
 
         ports = self._algorithm.initialize(self)
         for port in ports:
-            event = Event(0, port)
+            event = Event(0, port, Event._SEND)
             events.append(event)
 
         return events
@@ -83,45 +83,50 @@ class Router(Device):
 
         time = event.schedule()
         port = event.port()
+        action = event.action()
 
-        # Processes all received packets
-        while port.in_queue():
-            packet = port.in_queue().popleft() # append right, pop left
+        if action == Event._RECEIVE:
+            # Processes all received packets
+            while port.in_queue():
+                packet = port.in_queue().popleft() # append right, pop left
 
-            print >> sys.stderr, 'Router %s received packet %s' % (self, packet)
-            # exit()
+                print >> sys.stderr, 'Router %s received packet %s' % (self, packet)
+                # exit()
 
-            # TODO: handle hello packet
-            if packet.has(self._algorithm._TYPE):
-                update_ports = self._algorithm.update(packet)
+                # TODO: handle hello packet
+                if packet.has(self._algorithm._TYPE):
+                    update_ports = self._algorithm.update(packet)
 
-                if update_ports is not None:
-                    for update_port in update_ports:
-                        update_event = Event(time, port)
-                        events.append(update_event)
+                    if update_ports is not None:
+                        for update_port in update_ports:
+                            update_event = Event(time, port, Event._SEND)
+                            events.append(update_event)
 
-            # TODO: otherwise, forward packet onward
-            #       (place in outgoing queue)
-            else:
-                port.out_queue().append(packet) # append right, pop left
+                # TODO: otherwise, forward packet onward
+                #       (place in outgoing queue)
+                else:
+                    port.out_queue().append(packet) # append right, pop left
 
-        # Processes at most one outgoing packet
-        if port.out_queue():
-            # TODO: ensure window size is greater than number of outstanding packets
+                    # TODO: create send event
 
-            packet = port.out_queue().popleft() # append right, pop left
+        elif action == Event._SEND:
+            # Processes at most one outgoing packet
+            if port.out_queue():
+                # TODO: ensure window size is greater than number of outstanding packets
 
-            print >> sys.stderr, 'Router %s sent packet %s' % (self, packet)
+                packet = port.out_queue().popleft() # append right, pop left
 
-            # TODO: forward packet onward
-            #       (place in incoming queue of next hop)
-            link = port.out_link()
-            delay = link.delay()
-            destination = link.destination()
+                print >> sys.stderr, 'Router %s sent packet %s' % (self, packet)
 
-            destination.in_queue().append(packet) # append right, pop left
+                # TODO: forward packet onward
+                #       (place in incoming queue of next hop)
+                link = port.out_link()
+                delay = link.delay()
+                destination = link.destination()
 
-            spawned_event = Event(time + delay, destination)
-            events.append(spawned_event)
+                destination.in_queue().append(packet) # append right, pop left
+
+                spawned_event = Event(time + delay, destination, Event._RECEIVE)
+                events.append(spawned_event)
 
         return events
