@@ -91,7 +91,7 @@ class BellmanFord(RoutingAlgorithm):
             current_cost = self._costs.get(destination, -1)
 
             # Checks whether new or better route found
-            if current_cost == -1 or overall_cost < current_cost:
+            if current_cost == -1 or overall_cost < current_cost
                 # Updates cost to destination
                 self._costs[destination] = overall_cost
 
@@ -100,7 +100,14 @@ class BellmanFord(RoutingAlgorithm):
 
                 changed = True
 
-            # TODO: handle case where cost of known route has changed
+            # Checks whether dynamic cost of known route has increased
+            elif self._routing_table[destination] == self._routing_table[next] and
+                 overall_cost > current_cost:
+
+                # Updates cost to destination
+                self._costs[destination] = overall_cost
+
+                changed = True
 
         if changed:
             return self._notify()
