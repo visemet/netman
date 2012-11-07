@@ -11,22 +11,24 @@ class BellmanFord(RoutingAlgorithm):
 
     def _notify(self):
         """
+        Adds packets containing the cost information to the outgoing
+        buffers of each port.
         """
-
-        packets = []
 
         source = self._router
         for port in source._ports: # TODO: change to use proper accessor
             link = port.out_link()
-            destination = link.destination()
+            destination = link.destination().device()
 
-            packet = Packet().source(source) \
-                             .destination(destination) \
-                             .datum(BellmanFord._COSTS, self._costs)
+            packet = Packet()
+            packet.source(source)
+            packet.destination(destination)
+            packet.datum(BellmanFord._COSTS, self._costs)
 
-            packets.append(packet)
+            # TODO: handle no space in outgoing buffer
+            port.out_queue().append(packet) # append right, pop left
 
-        return packets
+        return source._ports
 
     # Overrides Algorithm.initialize(router)
     def initialize(self, router):
@@ -45,7 +47,7 @@ class BellmanFord(RoutingAlgorithm):
 
         for port in router._ports: # TODO: change to use proper accessor
             link = port.out_link()
-            destination = link.destination()
+            destination = link.destination().device()
             cost = link.cost()
 
             self._costs[destination] = cost
@@ -98,4 +100,7 @@ class BellmanFord(RoutingAlgorithm):
 
                 changed = True
 
-        return changed
+            # TODO: handle case where cost of known route has changed
+
+        if changed:
+            return self._notify()
