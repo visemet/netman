@@ -46,7 +46,9 @@ class BellmanFord(RoutingAlgorithm):
         self._router = router
 
         self._costs = {}
+        # self._costs = {self._router: 0}
         self._routing_table = {}
+        # self._routing_table = {self._router: None}
 
         for port in router._ports: # TODO: change to use proper accessor
             link = port.out_link()
@@ -90,6 +92,9 @@ class BellmanFord(RoutingAlgorithm):
 
         # Iterates through each destination and cost from the packet data
         for (destination, cost) in costs.iteritems():
+            if destination == self._router:
+                continue
+
             overall_cost = cost + next_cost
             current_cost = self._costs.get(destination, -1)
 
