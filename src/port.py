@@ -14,6 +14,12 @@ class Port:
 
         self.window(window_size)
 
+    def __str__(self):
+        """
+        """
+
+        return 'Port[device=%s]' % (self.device())
+
     def window(self, size=None):
         """
         window()     -> returns the window size
