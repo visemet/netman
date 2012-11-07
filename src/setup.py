@@ -75,9 +75,9 @@ if __name__ == '__main__':
             newport = Port().device(devices[info[0]]).in_link(link1).out_link(link2).in_queue(deque()).out_queue(deque())
             newport2 = Port().device(devices[info[1]]).in_link(link2).out_link(link1).in_queue(deque()).out_queue(deque())
 
-            link1.source(newport).destination(newport2).rate(float(info[2])).delay(float(info[3]))
+            link1.source(newport2).destination(newport).rate(float(info[2])).delay(float(info[3]))
             print "link src: " + str(info[0]) + " dest:" + str(info[1]) + " rate:" + str(info[2])
-            link2.source(newport2).destination(newport).rate(float(info[2])).delay(float(info[3]))
+            link2.source(newport).destination(newport2).rate(float(info[2])).delay(float(info[3]))
             print "link src: " + str(info[1]) + " dest:" + str(info[0]) + " rate:" + str(info[2])
 
             print "port between links " + str(info[0]) + " " + str(info[1])
