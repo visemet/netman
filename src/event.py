@@ -1,16 +1,18 @@
-from packet import Packet
+from port import Port
 
 class Event:
     """
+    Builder for Event instances.
     """
 
-    def __init__(self, time, packet):
+    def __init__(self, time, port):
         """
-        Creates an Event instance with the specified time and packet.
+        Creates an Event instance with the specified time and the
+        specified port.
         """
 
         self.schedule(time)
-        self.packet(packet)
+        self.port(port)
 
     def schedule(self, time=None):
         """
@@ -22,24 +24,28 @@ class Event:
         if time is None:
             return self._time
 
+        # Checks whether time is an int and converts to float
+        if isinstance(time, int):
+            time = float(time)
+
         # Checks that time is a float
         if not isinstance(time, float):
             raise TypeError, 'time must be a float'
 
         self._time = time
 
-    def packet(self, packet=None):
+    def port(self, port=None):
         """
-        packet()       -> returns the packet
+        port()     -> returns the port
 
-        packet(packet) -> sets the packet as the specified value
+        port(port) -> sets the port as the specified value
         """
 
-        if packet is None:
-            return self._packet
+        if port is None:
+            return self._port
 
-        # Checks that packet is a Packet instance
-        if not isinstance(packet, Packet):
-            raise TypeError, 'packet must a Packet instance'
+        # Checks that port is a Port instance
+        if not isinstance(port, Port):
+            raise TypeError, 'port must a Port instance'
 
-        self._packet = packet
+        self._port = port
