@@ -19,31 +19,33 @@ class Simulation:
 
     def _initialize(self):
         """
+        Initializes the simulation.
         """
 
-        # Initializes each device
+        # Iterates through each device
         for device in self._devices:
+            Initializes each device
             events = device.initialize()
 
-            eventList = device.initialize()
             for event in events:
                 heappush(self._event_queue, event)
 
     def start(self):
         """
+        Starts the simulation.
         """
 
+        # Initializes the simulation
         self._initialize()
         
         # Loops through all events on the queue
         while not self._event_queue:
+            # Removes the event from the head of the buffer
             event = heappop(self._event_queue)
+            device = event.port().device()
 
-            # TODO: spawned_events = handle(event)
-            port = event.port()
-            device = port.out_link.source()
-
-            spawned_events = device.process(port)
-
+            # Processes the event
+            spawned_events = device.process(event)
+            # Adds the spawned event to the queue
             for spawned_event in spawned_events:
                 heappush(self._event_queue, spawned_event)
