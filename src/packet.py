@@ -12,6 +12,13 @@ class Packet:
 
         self._data = dict()
 
+    def has(self, key):
+        """
+        Returns whether the packet contains data for the specified key.
+        """
+
+        return key in self._data
+
     def datum(self, key, value=None):
         """
         datum(key)        -> returns the value associated with the
