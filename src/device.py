@@ -12,7 +12,13 @@ class Device:
         if not isinstance(identifier, str):
             raise TypeError, 'identifier must be a string'
 
-        self.id = identifier
+        self._id = identifier
+
+    def __str__(self):
+        """
+        """
+
+        return self._id
 
     def initialize(self):
         """
