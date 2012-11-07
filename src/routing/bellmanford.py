@@ -5,6 +5,7 @@ from router import Router
 
 class BellmanFord(RoutingAlgorithm):
     """
+    Logic for Bellman-Ford algorithm.
     """
 
     _COSTS = 'costs'
