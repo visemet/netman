@@ -12,6 +12,12 @@ class Packet:
 
         self._data = dict()
 
+    def __str__(self):
+        """
+        """
+
+        return 'Packet[source=%s, destination=%s, data=%s]' % (self.source(), self.destination(), self._data)
+
     def has(self, key):
         """
         Returns whether the packet contains data for the specified key.
