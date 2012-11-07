@@ -1,31 +1,49 @@
-'''
-receives the configuration from setup.py
-initializes the devices
-initializes the event queue
-'''
+from device import Device
+from event import Event
+from heapq import heappush, heappop
 
-import routing.static
-import router
-import port
-import link
-import host
-import flow 
+class Simulation:
+    """
+    """
 
-class Simulate:
     def __init__(self, devices):
-        self._eventQueue = []
-        # initialize the devices, receive the event back, put the event into the queue
-        for device in devices:
-            #TODO is the returned event an event or a list of events?
+        """
+        Creates a simulation instance with the specified list of
+        devices.
+        """
+
+        # TODO: check devices is list of Device instances
+        self._devices = devices
+
+        self._event_queue = []
+
+    def _initialize(self):
+        """
+        """
+
+        # Initializes each device
+        for device in self._devices:
+            events = device.initialize()
+
             eventList = device.initialize()
-            for event in eventList:
-                heappush(eventQueue, event)
+            for event in events:
+                heappush(self._event_queue, event)
+
+    def start(self):
+        """
+        """
+
+        self._initialize()
         
-        #start the loop
-        while not empty(self._eventQueue):
-            #handle the event, receive the new events spawned back from it
-            newEvents = handle(heappop(self._eventQueue))
-            for event in newEvents:
-                heappush(eventQueue, event)
-            
-        print "terminated \n"
+        # Loops through all events on the queue
+        while not self._event_queue:
+            event = heappop(self._event_queue)
+
+            # TODO: spawned_events = handle(event)
+            port = event.port()
+            device = port.out_link.source()
+
+            spawned_events = device.process(port)
+
+            for spawned_event in spawned_events:
+                heappush(self._event_queue, spawned_event)
