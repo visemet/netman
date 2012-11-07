@@ -39,7 +39,7 @@ class Router(Device):
         Returns the directly connected routers as a set.
         """
 
-        return set(port.out_link().destination() for port in self._ports)
+        return set(port.out_link().destination().device() for port in self._ports)
 
     # Overrides Device.initialize()
     def initialize(self):
@@ -47,7 +47,14 @@ class Router(Device):
         Initializes the router.
         """
 
-        self._algorithm.initialize(self)
+        events = []
+
+        ports = self._algorithm.initialize(self)
+        for port in ports:
+            event = Event(0, port)
+            events.append(event)
+
+        return events
 
     # Overrides Device.send(packet)
     def send(self, packet):
@@ -63,4 +70,27 @@ class Router(Device):
         Processes the specified event.
         """
 
-        raise NotImplementedError, 'Router.process(event)'
+        events = []
+
+        port = event.port()
+
+        # Processes all received packets
+        while port.in_queue():
+            packet = port.in_queue().popleft() # append right, pop left
+
+            # TODO: handle hello packet
+            events.extend(self._algorithm.update(packet))
+
+            # TODO: otherwise, forward packet onward
+            #       (place in outgoing queue)
+
+        # Processes at most one outgoing packet
+        if port.out_queue():
+            # TODO: ensure window size is greater than number of outstanding packets
+
+            packet = port.out_queue().popleft() # append right, pop left
+
+            # TODO: forward packet onward
+            #       (place in incoming queue of next hop)
+
+        return events
