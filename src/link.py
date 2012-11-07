@@ -1,4 +1,4 @@
-from device import Device
+import port
 from linkTracker import LinkTracker
 
 class Link:
@@ -74,8 +74,8 @@ class Link:
             return self._source
 
         # Checks that port is a Port instance
-        if not isinstance(port, Port):
-            raise TypeError, 'port must be a Port instance'
+        # if not isinstance(port, port.Port):
+        #     raise TypeError, 'port must be a Port instance'
 
         self._source = port
         return self
@@ -92,8 +92,8 @@ class Link:
             return self._destination
 
         # Checks that port is a Port instance
-        if not isinstance(port, Port):
-            raise TypeError, 'port must be a Port instance'
+        # if not isinstance(port, port.Port):
+        #     raise TypeError, 'port must be a Port instance'
 
         self._destination = port
         return self

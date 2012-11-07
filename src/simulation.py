@@ -39,7 +39,7 @@ class Simulation:
         self._initialize()
         
         # Loops through all events on the queue
-        while not self._event_queue:
+        while self._event_queue:
             # Removes the event from the head of the buffer
             event = heappop(self._event_queue)
             device = event.port().device()
