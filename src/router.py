@@ -1,3 +1,5 @@
+import sys
+
 from device import Device
 from event import Event
 from port import Port
@@ -23,6 +25,12 @@ class Router(Device):
         self._algorithm = algorithm
 
         self._ports = set()
+
+    def __repr__(self):
+        """
+        """
+
+        return self.__str__()
 
     def enable(self, port):
         """
@@ -80,12 +88,17 @@ class Router(Device):
         while port.in_queue():
             packet = port.in_queue().popleft() # append right, pop left
 
+            print >> sys.stderr, 'Router %s received packet %s' % (self, packet)
+            # exit()
+
             # TODO: handle hello packet
             if packet.has(self._algorithm._TYPE):
                 update_ports = self._algorithm.update(packet)
-                for update_port in update_ports:
-                    update_event = Event(time, port)
-                    events.append(update_event)
+
+                if update_ports is not None:
+                    for update_port in update_ports:
+                        update_event = Event(time, port)
+                        events.append(update_event)
 
             # TODO: otherwise, forward packet onward
             #       (place in outgoing queue)
@@ -98,11 +111,15 @@ class Router(Device):
 
             packet = port.out_queue().popleft() # append right, pop left
 
+            print >> sys.stderr, 'Router %s sent packet %s' % (self, packet)
+
             # TODO: forward packet onward
             #       (place in incoming queue of next hop)
             link = port.out_link()
             delay = link.delay()
             destination = link.destination()
+
+            destination.in_queue().append(packet) # append right, pop left
 
             spawned_event = Event(time + delay, destination)
             events.append(spawned_event)
