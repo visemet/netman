@@ -14,6 +14,48 @@ class Event:
         self.schedule(time)
         self.port(port)
 
+    def __lt__(self, other):
+        """
+        """
+
+        return self.schedule() < other.schedule()
+
+    def __le__(self, other):
+        """
+        """
+
+        return self.schedule() <= other.schedule()
+
+    def __eq__(self, other):
+        """
+        """
+
+        return self.schedule() == other.schedule()
+
+    def __ne__(self, other):
+        """
+        """
+
+        return self.schedule() != other.schedule()
+
+    def __gt__(self, other):
+        """
+        """
+
+        return self.schedule() > other.schedule()
+
+    def __ge__(self, other):
+        """
+        """
+
+        return self.schedule() >= other.schedule()
+
+    def __str__(self):
+        """
+        """
+
+        return 'Event[time=%s, port=%s]' % (self.schedule(), self.port())
+
     def schedule(self, time=None):
         """
         schedule()     -> returns the time
