@@ -107,7 +107,7 @@ class Router(Device):
                 else:
                     port.out_queue().append(packet) # append right, pop left
 
-                    # TODO: create send event
+                    # TODO: create send event at current time
 
         elif action == Event._SEND:
             # Processes at most one outgoing packet
@@ -121,12 +121,15 @@ class Router(Device):
                 # TODO: forward packet onward
                 #       (place in incoming queue of next hop)
                 link = port.out_link()
-                delay = link.delay()
+                prop_delay = link.delay()
                 destination = link.destination()
 
                 destination.in_queue().append(packet) # append right, pop left
 
-                spawned_event = Event(time + delay, destination, Event._RECEIVE)
+                spawned_event = Event(time + prop_delay, destination, Event._RECEIVE)
                 events.append(spawned_event)
+
+                # TODO: create send event at tranmission delay later
+                # trans_delay = packet.size() / link.rate()
 
         return events
