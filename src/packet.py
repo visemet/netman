@@ -18,6 +18,12 @@ class Packet:
 
         return 'Packet[source=%s, destination=%s, data=%s]' % (self.source(), self.destination(), self._data)
 
+    def __repr__(self):
+        """
+        """
+
+        return self.__str__()
+
     def has(self, key):
         """
         Returns whether the packet contains data for the specified key.

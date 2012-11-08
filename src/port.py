@@ -18,7 +18,13 @@ class Port:
         """
         """
 
-        return 'Port[device=%s]' % (self.device())
+        return 'Port[device=%s->%s]' % (self.device(), self.out_link().destination().device())
+
+    def __repr__(self):
+        """
+        """
+
+        return self.__str__()
 
     def window(self, size=None):
         """
