@@ -49,3 +49,6 @@ class Simulation:
             # Adds the spawned event to the queue
             for spawned_event in spawned_events:
                 heappush(self._event_queue, spawned_event)
+
+        for device in self._devices:
+            print (device, device._algorithm._routing_table)
