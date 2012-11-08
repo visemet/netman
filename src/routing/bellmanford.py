@@ -1,3 +1,5 @@
+from copy import copy
+
 from algorithm import RoutingAlgorithm
 from device import Device
 from packet import Packet
@@ -25,7 +27,7 @@ class BellmanFord(RoutingAlgorithm):
             packet = Packet()
             packet.source(source)
             packet.destination(destination)
-            packet.datum(BellmanFord._COSTS, self._costs)
+            packet.datum(BellmanFord._COSTS, copy(self._costs))
             packet.datum(BellmanFord._TYPE, True)
 
             # TODO: handle no space in outgoing buffer
