@@ -19,25 +19,18 @@ class BellmanFord(RoutingAlgorithm):
         buffers of each port.
         """
 
-        source = self._router
+        packets = {}
 
-        # TODO: get neighbors of router and create packets to those destination
-        #       then use routing table to decide the outgoing port
-
-        for port in source._ports: # TODO: change to use proper accessor
-            link = port.conn()
-            dest = link.dest().source()
-
+        for dest_device in self._router.neighbors():
             packet = Packet()
-            packet.source(source)
-            packet.dest(dest)
+            packet.source(self._router)
+            packet.dest(dest_device)
             packet.datum(BellmanFord._COSTS, copy(self._costs))
             packet.datum(BellmanFord._TYPE, True)
 
-            # TODO: handle no space in outgoing buffer
-            port.outgoing().append(packet) # append right, pop left
+            packet[dest_device] = packet
 
-        return source._ports
+        return packets
 
     # Overrides Algorithm.initialize(router)
     def initialize(self, router):
@@ -52,9 +45,7 @@ class BellmanFord(RoutingAlgorithm):
         self._router = router
 
         self._costs = {}
-        # self._costs = {self._router: 0}
         self._routing_table = {}
-        # self._routing_table = {self._router: None}
 
         for port in router._ports: # TODO: change to use proper accessor
             link = port.conn()
@@ -64,7 +55,7 @@ class BellmanFord(RoutingAlgorithm):
             self._costs[dest] = cost
             self._routing_table[dest] = port
 
-        # Create set of packets with costs to send to neighbors
+        # Create packets with cost information to send to neighbors
         return self._notify()
 
     # Overrides Algorithm.next(device)
@@ -77,7 +68,7 @@ class BellmanFord(RoutingAlgorithm):
         if not isinstance(device, Device):
             raise TypeError, 'device must be a Device instance'
 
-        return self._routing_table[device]
+        return self._routing_table.get(device)
 
     # Overrides Algorithm.update(packet)
     def update(self, packet):
