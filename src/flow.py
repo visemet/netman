@@ -14,8 +14,8 @@ class Flow:
         self.bits(num_bits)
         self.schedule(start_time)
         self.destination(destination)
-        self.algorithm(algorithm)
-        self.tracker(FlowTracker())
+        # self.algorithm(algorithm)
+        # self.tracker(FlowTracker())
 
     def getTracker(self):
         '''
@@ -38,8 +38,8 @@ class Flow:
             raise TypeError, 'number of bits must be an int'
 
         # Checks that num is positive
-        elif num <= 0:
-            raise ValueError, 'number of bits must be positive'
+        # elif num <= 0:
+        #     raise ValueError, 'number of bits must be positive'
 
         self._num_bits = num
 
@@ -52,6 +52,10 @@ class Flow:
 
         if time is None:
             return self._start_time
+
+        # Checks whether time is an int and converts to a float
+        if isinstance(time, int):
+            time = float(time)
 
         # Checks that time is a float
         if not isinstance(time, float):
