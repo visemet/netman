@@ -92,13 +92,6 @@ class Port:
     Builder for Port instances.
     """
 
-    def __init__(self, window_size=1):
-        """
-        Creates a Port instance with the specified window size.
-        """
-
-        self.window(window_size)
-
     def __repr__(self):
         """
         Defines the string representation for a Port instance.
@@ -108,26 +101,6 @@ class Port:
                 'source=%s, '
                 'conn=%s'
                 ']') % (self.source(), self.conn())
-
-    def window(self, size=None):
-        """
-        window()     -> returns the window size
-
-        window(size) -> sets the window size as the specified value
-        """
-
-        if size is None:
-            return self._window_size
-
-        # Checks that size is an int
-        if not isinstance(size, int):
-            raise TypeError, 'window size must be an int'
-
-        # Checks that size is positive
-        elif size <= 0:
-            raise ValueError, 'window size must be positive'
-
-        self._window_size = size
 
     def source(self, device=None):
         """
@@ -192,16 +165,3 @@ class Port:
             raise TypeError, 'queue must be a deque'
 
         self._outgoing_queue = queue
-
-    def algorithm(self, algorithm=None):
-        """
-        algorithm()          -> returns the algorithm
-
-        algorithm(algorithm) -> sets the algorithm
-        """
-
-        if algorithm is None:
-            return self._algorithm
-
-        # TODO: check that algorithm isinstance(congestion.algorithm)
-        self._algorithm = algorithm
