@@ -61,43 +61,22 @@ class Link:
             raise TypeError, 'rate must be a float'
 
         self._rate = rate
-        return self
 
-    def source(self, port=None):
+    def dest(self, port=None):
         """
-        source()     -> returns the source port
+        dest()     -> returns the destination port
 
-        source(port) -> sets the source port as the specified value
-                        and returns this instance
+        dest(port) -> sets the destination port as the specified value
         """
 
         if port is None:
-            return self._source
+            return self._dest_port
 
         # Checks that port is a Port instance
-        # if not isinstance(port, port.Port):
-        #     raise TypeError, 'port must be a Port instance'
+        if not isinstance(port, port.Port):
+            raise TypeError, 'port must be a Port instance'
 
-        self._source = port
-        return self
-
-    def destination(self, port=None):
-        """
-        destination()     -> returns the destination port
-
-        destination(port) -> sets the destination port as the specified
-                             value and returns this instance
-        """
-
-        if port is None:
-            return self._destination
-
-        # Checks that port is a Port instance
-        # if not isinstance(port, port.Port):
-        #     raise TypeError, 'port must be a Port instance'
-
-        self._destination = port
-        return self
+        self._dest_port = port
 
 class Port:
     """
@@ -143,99 +122,69 @@ class Port:
 
         self._window_size = size
 
-    def device(self, device=None):
+    def source(self, device=None):
         """
-        device()       -> returns the device
+        source()       -> returns the source device
 
-        device(device) -> sets the device as the specified value and
-                          returns this instance
+        source(device) -> sets the source device as the specified value
         """
 
         if device is None:
-            return self._device
+            return self._source_device
 
         # Checks that device is a Device instance
         if not isinstance(device, Device):
             raise TypeError, 'device must be a Device instance'
 
-        self._device = device
-        return self
+        self._source_device = device
 
-    def in_queue(self, queue=None):
+    def conn(self, link=None):
         """
-        in_queue()      -> returns the queue for storing incoming
-                           packets
+        conn()     -> returns the link connected to the destination
 
-        in_queue(queue) -> sets the queue as the specified value and
-                           returns this instance
+        conn(link) -> sets the link as the specified value
+        """
+
+        if link is None:
+            return self._conn_link
+
+        # Checks that link is a Link instance
+        if not isinstance(link, Link):
+            raise TypeError, 'link must be a Link instance'
+
+        self._conn_link = link
+
+    def incoming(self, queue=None):
+        """
+        incoming()      -> returns the queue for storing incoming packets
+
+        incoming(queue) -> sets the queue as the specified value
         """
 
         if queue is None:
-            return self._in_queue
+            return self._incoming_queue
 
         # Checks that queue is a deque
         if not isinstance(queue, deque):
             raise TypeError, 'queue must be a deque'
 
         self._in_queue = queue
-        return self
 
-    def out_queue(self, queue=None):
+    def outgoing(self, queue=None):
         """
-        out_queue()      -> returns the queue for storing outgoing
-                            packets
+        outgoing()      -> returns the queue for storing outgoing packets
 
-        out_queue(queue) -> sets the queue as the specified value and
-                            returns this instance
+        outgoing(queue) -> sets the queue as the specified value
         """
 
         if queue is None:
-            return self._out_queue
+            return self._outgoing_queue
 
         # Checks that queue is a deque
         if not isinstance(queue, deque):
             raise TypeError, 'queue must be a deque'
 
         self._out_queue = queue
-        return self
-
-    def in_link(self, link=None):
-        """
-        in_link()     -> returns the link by which incoming packets are
-                         received
-
-        in_link(link) -> sets the link as the specified value and
-                         returns this instance
-        """
-
-        if link is None:
-            return self._in_link
-
-        # Checks that link is a Link instance
-        if not isinstance(link, Link):
-            raise TypeError, 'link must be a Link instance'
-
-        self._in_link = link
-        return self
-
-    def out_link(self, link=None):
-        """
-        out_link()     -> returns the link by which outgoing packets
-                          are sent
-
-        out_link(link) -> sets the link as the specified value and
-                          returns this instance
-        """
-
-        if link is None:
-            return self._out_link
-
-        # Checks that link is a Link instance
-        if not isinstance(link, Link):
-            raise TypeError, 'link must be a Link instance'
-
-        self._out_link = link
-        return self
 
     def algorithm(self, algorithm=None):
         """
