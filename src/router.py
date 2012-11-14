@@ -5,6 +5,7 @@ from device import Device
 from event import Event
 from flow import Flow
 from routing.algorithm import RoutingAlgorithm
+from packet import Packet
 
 class Router(Device):
     """
@@ -63,7 +64,12 @@ class Router(Device):
 
         for flow in self._flows.values():
             port = self._algorithm._routing_table[flow.destination()]
-            event = Event(flow.schedule(), port, Event._SEND)
+
+            event = Event()
+            event.scheduled(flow.schedule())
+            event.port(port)
+            event.action(Event._SEND)
+
             events.append(event)
 
         return events
@@ -76,7 +82,7 @@ class Router(Device):
 
         events = []
 
-        time = event.schedule()
+        time = event.scheduled()
         port = event.port()
         action = event.action()
 
@@ -94,7 +100,11 @@ class Router(Device):
 
                     if update_ports is not None:
                         for update_port in update_ports:
-                            update_event = Event(time, port, Event._SEND)
+                            update_event = Event()
+                            update_event.scheduled(time)
+                            update_event.port(port)
+                            update_event.action(Event._SEND)
+
                             events.append(update_event)
 
                     # TODO: send acknowledgment to packet source
@@ -123,7 +133,12 @@ class Router(Device):
 
                 dest.incoming().append(packet) # append right, pop left
 
-                spawned_event = Event(time + prop_delay, dest, Event._RECEIVE)
+                spawned_event = Event()
+                spawned_event.scheduled(time + prop_delay)
+                spawned_event.port(dest)
+                spawned_event.action(Event._RECEIVE)
+                spawned_event.packet(packet)
+
                 events.append(spawned_event)
 
                 # TODO: create send event at tranmission delay later
