@@ -20,6 +20,10 @@ class BellmanFord(RoutingAlgorithm):
         """
 
         source = self._router
+
+        # TODO: get neighbors of router and create packets to those destination
+        #       then use routing table to decide the outgoing port
+
         for port in source._ports: # TODO: change to use proper accessor
             link = port.conn()
             dest = link.dest().source()
@@ -111,8 +115,9 @@ class BellmanFord(RoutingAlgorithm):
                 changed = True
 
             # Checks whether dynamic cost of known route has increased
-            elif self._routing_table[dest] == self._routing_table[next] \
-                and overall_cost > current_cost:
+            elif (self._routing_table[dest] == self._routing_table[next]
+                  and self._routing_table[dest].conn().dest().source() == next
+                  and overall_cost > current_cost):
 
                 # Updates cost to destination
                 self._costs[dest] = overall_cost
