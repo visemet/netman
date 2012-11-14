@@ -3,22 +3,32 @@ class Device:
     Base class for routers and hosts.
     """
 
-    def __init__(self, identifier):
+    def __init__(self, name):
         """
-        Creates a device instance with the specified identifier.
+        Creates a device instance with the specified name.
         """
 
-        # Checks that identifier is a string
-        if not isinstance(identifier, str):
-            raise TypeError, 'identifier must be a string'
+        # Checks that name is a string
+        if not isinstance(name, str):
+            raise TypeError, 'name must be a string'
 
-        self._id = identifier
+        self._id = name
 
     def __str__(self):
         """
+        Defines the pretty print representation for a Device instance.
         """
 
         return self._id
+
+    def __repr__(self):
+        """
+        Defines the string representation for a Device instance.
+        """
+
+        return ('Device['
+                'id=%s'
+                ']') % (self._id)
 
     def initialize(self):
         """
@@ -26,13 +36,6 @@ class Device:
         """
 
         raise NotImplementedError, 'Device.initialize()'
-
-    def send(self, packet):
-        """
-        Sends the specified packet. Implemented in each subclass.
-        """
-
-        raise NotImplementedError, 'Device.send(packet)'
 
     def process(self, event):
         """
