@@ -28,12 +28,6 @@ class Router(Device):
         self._ports = set()
         self._flows = {}
 
-    def __repr__(self):
-        """
-        """
-
-        return self.__str__()
-
     def enable(self, port):
         """
         Adds the specified port to the set of ports.
@@ -65,22 +59,14 @@ class Router(Device):
             destination = port.out_link().destination().device()
             # TODO: create flow between this router and next to handle updates
             flow = Flow(-1, 0, port.out_link().destination().device(), None)
-            flows[destination] = flow
+            self._flows[destination] = flow
 
-        for flow in flows.values():
+        for flow in self._flows.values():
             port = self._algorithm._routing_table[flow.destination()]
             event = Event(flow.schedule(), port, Event._SEND)
             events.append(event)
 
         return events
-
-    # Overrides Device.send(packet)
-    def send(self, packet):
-        """
-        Sends the specified packet.
-        """
-
-        raise NotImplementedError, 'Router.send(packet)'
 
     # Overrides Device.process(event)
     def process(self, event):
@@ -103,7 +89,7 @@ class Router(Device):
                 # exit()
 
                 # TODO: handle hello packet
-                if packet.has(self._algorithm._TYPE):
+                if packet.has_datum(self._algorithm._TYPE):
                     update_ports = self._algorithm.update(packet)
 
                     if update_ports is not None:
