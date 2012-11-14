@@ -3,6 +3,7 @@ import sys
 from conn import Port
 from device import Device
 from event import Event
+from flow import Flow
 from routing.algorithm import RoutingAlgorithm
 
 class Router(Device):
@@ -25,6 +26,7 @@ class Router(Device):
         self._algorithm = algorithm
 
         self._ports = set()
+        self._flows = {}
 
     def __repr__(self):
         """
@@ -60,7 +62,14 @@ class Router(Device):
 
         ports = self._algorithm.initialize(self)
         for port in ports:
-            event = Event(0, port, Event._SEND)
+            destination = port.out_link().destination().device()
+            # TODO: create flow between this router and next to handle updates
+            flow = Flow(-1, 0, port.out_link().destination().device(), None)
+            flows[destination] = flow
+
+        for flow in flows.values():
+            port = self._algorithm._routing_table[flow.destination()]
+            event = Event(flow.schedule(), port, Event._SEND)
             events.append(event)
 
         return events
@@ -101,6 +110,8 @@ class Router(Device):
                         for update_port in update_ports:
                             update_event = Event(time, port, Event._SEND)
                             events.append(update_event)
+
+                    # TODO: send acknowledgment to packet source
 
                 # TODO: otherwise, forward packet onward
                 #       (place in outgoing queue)
