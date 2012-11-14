@@ -22,11 +22,11 @@ class BellmanFord(RoutingAlgorithm):
         source = self._router
         for port in source._ports: # TODO: change to use proper accessor
             link = port.out_link()
-            destination = link.destination().device()
+            dest = link.destination().device()
 
             packet = Packet()
             packet.source(source)
-            packet.destination(destination)
+            packet.dest(dest)
             packet.datum(BellmanFord._COSTS, copy(self._costs))
             packet.datum(BellmanFord._TYPE, True)
 
