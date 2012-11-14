@@ -168,7 +168,7 @@ class Port:
         if not isinstance(queue, deque):
             raise TypeError, 'queue must be a deque'
 
-        self._in_queue = queue
+        self._incoming_queue = queue
 
     def outgoing(self, queue=None):
         """
@@ -184,7 +184,7 @@ class Port:
         if not isinstance(queue, deque):
             raise TypeError, 'queue must be a deque'
 
-        self._out_queue = queue
+        self._outgoing_queue = queue
 
     def algorithm(self, algorithm=None):
         """
