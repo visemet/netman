@@ -56,7 +56,7 @@ class Simulation:
         while self._event_queue:
             # Pops the head off of the event queue
             event = heappop(self._event_queue)
-            device = event.port().device()
+            device = event.port().source()
 
             # Processes the event
             spawned_events = device.process(event)
