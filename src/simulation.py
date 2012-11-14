@@ -5,7 +5,7 @@ from event import Event
 
 class Simulation:
     """
-    Class for running multi‐link, multi‐flow network simulations.
+    Class for running multi-link, multi-flow network simulations.
     """
 
     def __init__(self, devices):
@@ -21,7 +21,7 @@ class Simulation:
         # Iterates through each device
         for device in devices:
             # Checks that each device is a Device instance
-            if not isinstance(device, list):
+            if not isinstance(device, Device):
                 raise TypeError, 'device must be a Device instance'
 
         # Stores the list of devices
