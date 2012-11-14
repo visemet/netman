@@ -69,7 +69,7 @@ class Packet:
         dest(device) -> sets the source as the specified value
         """
 
-        if dest is None:
+        if device is None:
             return self._dest
 
         # Checks that device is a Device instance
