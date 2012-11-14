@@ -1,4 +1,4 @@
-from port import Port
+from conn import Port
 
 class Event:
     """

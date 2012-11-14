@@ -24,10 +24,9 @@ Expects an input file with the inputs in the following order:
 from collections import deque
 import sys
 
+from conn import Link, Port
 from flow import Flow
 from host import Host
-from link import Link
-from port import Port
 from router import Router
 from routing.bellmanford import BellmanFord
 from simulation import Simulation

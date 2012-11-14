@@ -1,8 +1,8 @@
 import sys
 
+from conn import Port
 from device import Device
 from event import Event
-from port import Port
 from routing.algorithm import RoutingAlgorithm
 
 class Router(Device):
