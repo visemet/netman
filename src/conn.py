@@ -236,3 +236,16 @@ class Port:
 
         self._out_link = link
         return self
+
+    def algorithm(self, algorithm=None):
+        """
+        algorithm()          -> returns the algorithm
+
+        algorithm(algorithm) -> sets the algorithm
+        """
+
+        if algorithm is None:
+            return self._algorithm
+
+        # TODO: check that algorithm isinstance(congestion.algorithm)
+        self._algorithm = algorithm

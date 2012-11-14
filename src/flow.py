@@ -74,16 +74,3 @@ class Flow:
             raise TypeError, 'destination must be a Device instance'
 
         self._destination = destination
-
-    def algorithm(self, algorithm=None):
-        """
-        algorithm()          -> returns the algorithm
-
-        algorithm(algorithm) -> sets the algorithm
-        """
-
-        if algorithm is None:
-            return self._algorithm
-
-        # TODO: check that algorithm isinstance(congestion.algorithm)
-        self._algorithm = algorithm
