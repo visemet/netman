@@ -56,10 +56,10 @@ class Router(Device):
 
         ports = self._algorithm.initialize(self)
         for port in ports:
-            destination = port.out_link().destination().device()
+            dest = port.conn().dest().source()
             # TODO: create flow between this router and next to handle updates
-            flow = Flow(-1, 0, port.out_link().destination().device(), None)
-            self._flows[destination] = flow
+            flow = Flow(-1, 0, dest, None)
+            self._flows[dest] = flow
 
         for flow in self._flows.values():
             port = self._algorithm._routing_table[flow.destination()]
@@ -82,8 +82,8 @@ class Router(Device):
 
         if action == Event._RECEIVE:
             # Processes all received packets
-            while port.in_queue():
-                packet = port.in_queue().popleft() # append right, pop left
+            while port.incoming():
+                packet = port.incoming().popleft() # append right, pop left
 
                 print >> sys.stderr, 'Router %s received packet %s' % (self, packet)
                 # exit()
@@ -102,28 +102,28 @@ class Router(Device):
                 # TODO: otherwise, forward packet onward
                 #       (place in outgoing queue)
                 else:
-                    port.out_queue().append(packet) # append right, pop left
+                    port.outgoing().append(packet) # append right, pop left
 
                     # TODO: create send event at current time
 
         elif action == Event._SEND:
             # Processes at most one outgoing packet
-            if port.out_queue():
+            if port.outgoing():
                 # TODO: ensure window size is greater than number of outstanding packets
 
-                packet = port.out_queue().popleft() # append right, pop left
+                packet = port.outgoing().popleft() # append right, pop left
 
                 print >> sys.stderr, 'Router %s sent packet %s' % (self, packet)
 
                 # TODO: forward packet onward
                 #       (place in incoming queue of next hop)
-                link = port.out_link()
+                link = port.conn()
                 prop_delay = link.delay()
-                destination = link.destination()
+                dest = link.dest()
 
-                destination.in_queue().append(packet) # append right, pop left
+                dest.incoming().append(packet) # append right, pop left
 
-                spawned_event = Event(time + prop_delay, destination, Event._RECEIVE)
+                spawned_event = Event(time + prop_delay, dest, Event._RECEIVE)
                 events.append(spawned_event)
 
                 # TODO: create send event at tranmission delay later
