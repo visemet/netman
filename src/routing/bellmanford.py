@@ -21,8 +21,8 @@ class BellmanFord(RoutingAlgorithm):
 
         source = self._router
         for port in source._ports: # TODO: change to use proper accessor
-            link = port.out_link()
-            dest = link.destination().device()
+            link = port.conn()
+            dest = link.dest().source()
 
             packet = Packet()
             packet.source(source)
@@ -31,7 +31,7 @@ class BellmanFord(RoutingAlgorithm):
             packet.datum(BellmanFord._TYPE, True)
 
             # TODO: handle no space in outgoing buffer
-            port.out_queue().append(packet) # append right, pop left
+            port.outgoing().append(packet) # append right, pop left
 
         return source._ports
 
@@ -53,12 +53,12 @@ class BellmanFord(RoutingAlgorithm):
         # self._routing_table = {self._router: None}
 
         for port in router._ports: # TODO: change to use proper accessor
-            link = port.out_link()
-            destination = link.destination().device()
+            link = port.conn()
+            dest = link.dest().source()
             cost = link.cost()
 
-            self._costs[destination] = cost
-            self._routing_table[destination] = port
+            self._costs[dest] = cost
+            self._routing_table[dest] = port
 
         # Create set of packets with costs to send to neighbors
         return self._notify()
@@ -93,29 +93,29 @@ class BellmanFord(RoutingAlgorithm):
         costs = packet.datum(BellmanFord._COSTS) # TODO: handle when no data found
 
         # Iterates through each destination and cost from the packet data
-        for (destination, cost) in costs.iteritems():
-            if destination == self._router:
+        for (dest, cost) in costs.iteritems():
+            if dest == self._router:
                 continue
 
             overall_cost = cost + next_cost
-            current_cost = self._costs.get(destination, -1)
+            current_cost = self._costs.get(dest, -1)
 
             # Checks whether new or better route found
             if current_cost == -1 or overall_cost < current_cost:
                 # Updates cost to destination
-                self._costs[destination] = overall_cost
+                self._costs[dest] = overall_cost
 
                 # Updates routing table to destination
-                self._routing_table[destination] = self._routing_table[next]
+                self._routing_table[dest] = self._routing_table[next]
 
                 changed = True
 
             # Checks whether dynamic cost of known route has increased
-            elif self._routing_table[destination] == self._routing_table[next] \
+            elif self._routing_table[dest] == self._routing_table[next] \
                 and overall_cost > current_cost:
 
                 # Updates cost to destination
-                self._costs[destination] = overall_cost
+                self._costs[dest] = overall_cost
 
                 changed = True
 
