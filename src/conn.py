@@ -73,7 +73,7 @@ class Link:
             return self._dest_port
 
         # Checks that port is a Port instance
-        if not isinstance(port, port.Port):
+        if not isinstance(port, Port):
             raise TypeError, 'port must be a Port instance'
 
         self._dest_port = port
