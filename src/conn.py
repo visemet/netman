@@ -7,6 +7,15 @@ class Link:
     Builder for Link instances.
     """
 
+    def __repr__(self):
+        """
+        Defines the string representation for a Link instance.
+        """
+
+        return ('Link['
+                'dest=%s'
+                ']') % (self.dest().source())
+
     def initTracker(self):
         '''
         initialize the linkTracker
@@ -90,17 +99,15 @@ class Port:
 
         self.window(window_size)
 
-    def __str__(self):
-        """
-        """
-
-        return 'Port[device=%s->%s]' % (self.device(), self.out_link().destination().device())
-
     def __repr__(self):
         """
+        Defines the string representation for a Port instance.
         """
 
-        return self.__str__()
+        return ('Port['
+                'source=%s, '
+                'conn=%s'
+                ']') % (self.source(), self.conn())
 
     def window(self, size=None):
         """
