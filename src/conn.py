@@ -65,9 +65,9 @@ class Link:
         if rate is None:
             return self._rate
 
-        # Checks that rate is a float
-        if not isinstance(rate, float):
-            raise TypeError, 'rate must be a float'
+        # Checks that rate is an int
+        if not isinstance(rate, int):
+            raise TypeError, 'rate must be an int'
 
         self._rate = rate
 
