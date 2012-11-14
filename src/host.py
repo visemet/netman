@@ -48,14 +48,6 @@ class Host(Device):
 
         raise NotImplementedError, 'Host.initialize()'
 
-    # Overrides Device.send(packet)
-    def send(self, packet):
-        """
-        Sends the specified packet.
-        """
-
-        raise NotImplementedError, 'Host.send(packet)'
-
     # Overrides Device.process(event)
     def process(self, event):
         """
