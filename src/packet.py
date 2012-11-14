@@ -10,23 +10,78 @@ class Packet:
         Creates a Packet instance.
         """
 
-        self._data = dict()
+        # Initializes attributes as None
+        self._id = None
+        self._source = None
+        self._dest = None
 
-    def __str__(self):
-        """
-        """
-
-        return 'Packet[source=%s, destination=%s, data=%s]' % (self.source(), self.destination(), self._data)
+        # Initializes the packet data
+        self._data = {}
 
     def __repr__(self):
         """
+        Defines the string representation for a Packet instance.
         """
 
-        return self.__str__()
+        return ('Packet['
+                'id=%s, '
+                'source=%s, '
+                'dest=%s, '
+                'data=%s'
+                ']') % (self.seq(), self.source(), self.dest(), self._data)
 
-    def has(self, key):
+    def seq(self, num=None):
         """
-        Returns whether the packet contains data for the specified key.
+        seq()    -> returns the sequence number
+
+        seq(num) -> sets the sequence number as the specified value
+        """
+
+        if num is None:
+            return self._id
+
+        # Checks that num is an int
+        if not isinstance(num, int):
+            raise TypeError, 'num must be an int'
+
+        self._id = num
+
+    def source(self, device=None):
+        """
+        source()       -> returns the source
+
+        source(device) -> sets the source as the specified value
+        """
+
+        if device is None:
+            return self._source
+
+        # Checks that device is a Device instance
+        if not isinstance(device, Device):
+            raise TypeError, 'device must be a Device instance'
+
+        self._source = device
+
+    def dest(self, device=None):
+        """
+        dest()       -> returns the destination
+
+        dest(device) -> sets the source as the specified value
+        """
+
+        if dest is None:
+            return self._dest
+
+        # Checks that device is a Device instance
+        if not isinstance(device, Device):
+            raise TypeError, 'device must be a Device instance'
+
+        self._dest = device
+
+    def has_datum(self, key):
+        """
+        Returns True if the packet contains a datum for the specified
+        key, and False otherwise.
         """
 
         return key in self._data
@@ -36,66 +91,10 @@ class Packet:
         datum(key)        -> returns the value associated with the
                              specified key
 
-        datum(key, value) -> adds the specified key-value pair and
-                             returns this instance
+        datum(key, value) -> adds the specified key-value pair
         """
 
         if value is None:
             return self._data[key]
 
         self._data[key] = value
-        return self
-
-    def identifier(self, identifier=None):
-        """
-        identifier()           -> returns the identifier
-
-        identifier(identifier) -> sets the identifier as the specified
-                                  value and returns this instance
-        """
-
-        if identifier is None:
-            return self._identifier
-
-        # Checks that identifier is an int
-        if not isinstance(identifier, int):
-            raise TypeError, 'identifier must be an int'
-
-        self._identifier = identifier
-        return self
-
-    def source(self, source=None):
-        """
-        source()       -> returns the source
-
-        source(source) -> sets the source as the specified value and
-                          returns this instance
-        """
-
-        if source is None:
-            return self._source
-
-        # Checks that source is a Device instance
-        if not isinstance(source, Device):
-            raise TypeError, 'source must be a Device instance'
-
-        self._source = source
-        return self
-
-    def destination(self, destination=None):
-        """
-        destination()            -> returns the destination
-
-        destination(destination) -> sets the source as the specified
-                                    value and returns this instance
-        """
-
-        if destination is None:
-            return self._destination
-
-        # Checks that destination is a Device instance
-        if not isinstance(destination, Device):
-            raise TypeError, 'destination must be a Device instance'
-
-        self._destination = destination
-        return self
