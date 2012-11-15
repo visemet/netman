@@ -3,6 +3,7 @@
 from collections import deque
 from sys import argv
 
+from congestion.aimd import AIMD
 from conn import Link, Port
 from flow import Flow
 from host import Host
@@ -104,8 +105,19 @@ class Setup:
 
             # Flows
             elif curr_type == 3:
-                # TODO: create flows
-                pass
+                [source, dest, size, time, algorithm] = line.split(', ')
+
+                source_device = devices[source]
+                dest_device = devices[dest]
+                size = int(size)
+                time = float(time)
+
+                flow = Flow(AIMD())
+                flow.bits(size)
+                flow.start(time)
+                flow.dest(dest_device)
+
+                source_device.connect(flow)
 
             # Measurables
             elif curr_type == 4:
