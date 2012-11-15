@@ -26,7 +26,7 @@ class Router(Device):
 
         self._algorithm = algorithm
 
-        self._ports = set()
+        self._ports = []
         self._flows = {}
 
     def enable(self, port):
@@ -38,14 +38,14 @@ class Router(Device):
         if not isinstance(port, Port):
             raise TypeError, 'port must be a Port instance'
 
-        self._ports.add(port)
+        self._ports.append(port)
 
     def neighbors(self):
         """
-        Returns the directly connected routers as a set.
+        Returns the list of directly connected routers.
         """
 
-        return set(port.out_link().destination().device() for port in self._ports)
+        return [port.conn().dest().source() for port in self._ports]
 
     # Overrides Device.initialize()
     def initialize(self):
@@ -55,22 +55,39 @@ class Router(Device):
 
         events = []
 
-        ports = self._algorithm.initialize(self)
-        for port in ports:
-            dest = port.conn().dest().source()
-            # TODO: create flow between this router and next to handle updates
-            flow = Flow(-1, 0, dest, None)
+        # Creates a flow for each neighbor of the router
+        for dest in self.neighbors():
+            flow = Flow(None) # TODO: choose congestion algorithm
+            flow.start(0)
+            flow.dest(dest)
             self._flows[dest] = flow
 
+        # Initializes the routing algorithm
+        packets = self._algorithm.initialize(self)
+
+        # Iterates through each flow
         for flow in self._flows.values():
-            port = self._algorithm._routing_table[flow.destination()]
+            # Checks that flow can and wants to send data
+            if flow.is_able() and flow.has_data():
+                # Gets packet for corresponding destination
+                packet = packets[flow.dest()]
+                # Attaches a unique identifier (per flow) to the packet
+                packet.seq(flow.next_seq())
 
-            event = Event()
-            event.scheduled(flow.schedule())
-            event.port(port)
-            event.action(Event._SEND)
+                dest = packet.dest()
+                port = self._algorithm.next(dest)
 
-            events.append(event)
+                # Checks that destination is reachable
+                if port is None:
+                    continue
+
+                # Creates an event for the starting time of the flow
+                event = Event()
+                event.scheduled(flow.start())
+                event.action(Event._SEND)
+                event.packet(packet)
+
+                events.append(event)
 
         return events
 
