@@ -13,22 +13,23 @@ class BellmanFord(RoutingAlgorithm):
     _COSTS = 'costs'
     _TYPE = 'bellman-ford'
 
-    def _notify(self):
+    def _notify(self, changed):
         """
         Adds packets containing the cost information to the outgoing
         buffers of each port.
         """
 
-        packets = {}
+        packets = []
 
-        for dest_device in self._router.neighbors():
-            packet = Packet()
-            packet.source(self._router)
-            packet.dest(dest_device)
-            packet.datum(BellmanFord._COSTS, copy(self._costs))
-            packet.datum(BellmanFord._TYPE, True)
+        if changed:
+            for dest_device in self._router.neighbors():
+                packet = Packet()
+                packet.source(self._router)
+                packet.dest(dest_device)
+                packet.datum(BellmanFord._COSTS, copy(self._costs))
+                packet.datum(BellmanFord._TYPE, True)
 
-            packets[dest_device] = packet
+                packets.append(packet)
 
         return packets
 
@@ -56,7 +57,7 @@ class BellmanFord(RoutingAlgorithm):
             self._routing_table[dest] = port
 
         # Create packets with cost information to send to neighbors
-        return self._notify()
+        return self._notify(True)
 
     # Overrides RoutingAlgorithm.next(device)
     def next(self, device):
@@ -115,5 +116,4 @@ class BellmanFord(RoutingAlgorithm):
 
                 changed = True
 
-        if changed:
-            return self._notify()
+        return self._notify(changed)

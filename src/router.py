@@ -65,25 +65,26 @@ class Router(Device):
         # Initializes the routing algorithm
         packets = self._algorithm.initialize(self)
 
-        # Iterates through each flow
-        for flow in self._flows.values():
-            # Checks that flow can and wants to send data
-            if flow.is_able() and flow.has_data():
-                # Gets packet for corresponding destination
-                packet = packets[flow.dest()]
-                # Attaches a unique identifier (per flow) to the packet
-                packet.seq(flow.next_seq())
+        for packet in packets:
+            dest = packet.dest()
+            flow = self._flows[dest]
 
-                dest = packet.dest()
+            if flow.is_able() and flow.has_data():
                 port = self._algorithm.next(dest)
 
                 # Checks that destination is reachable
                 if port is None:
                     continue
 
+                # Attaches a unique identifier (per flow) to the packet
+                packet.seq(flow.next_seq())
+
+                port.outgoing().append(packet) # append right, pop left
+
                 # Creates an event for the starting time of the flow
                 event = Event()
                 event.scheduled(flow.start())
+                event.port(port)
                 event.action(Event._SEND)
                 event.packet(packet)
 
@@ -113,14 +114,29 @@ class Router(Device):
 
                 # TODO: handle hello packet
                 if packet.has_datum(self._algorithm._TYPE):
-                    update_ports = self._algorithm.update(packet)
+                    packets = self._algorithm.update(packet)
 
-                    if update_ports is not None:
-                        for update_port in update_ports:
+                    for packet in packets:
+                        dest = packet.dest()
+                        flow = self._flows[dest]
+
+                        if flow.is_able() and flow.has_data():
+                            port = self._algorithm.next(dest)
+
+                            # Checks that destination is reachable
+                            if port is None:
+                                continue
+
+                            # Attaches a unique identifier (per flow) to the packet
+                            packet.seq(flow.next_seq())
+
+                            port.outgoing().append(packet) # append right, pop left
+
                             update_event = Event()
                             update_event.scheduled(time)
                             update_event.port(port)
                             update_event.action(Event._SEND)
+                            update_event.packet(packet)
 
                             events.append(update_event)
 
