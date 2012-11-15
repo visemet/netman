@@ -9,7 +9,7 @@ class RoutingAlgorithm:
         Implemented in each subclass.
         """
 
-        raise NotImplementedError, 'Algorithm.initialize(router)'
+        raise NotImplementedError, 'RoutingAlgorithm.initialize(router)'
 
     def next(self, device):
         """
@@ -17,7 +17,7 @@ class RoutingAlgorithm:
         Implemented in each subclass.
         """
 
-        raise NotImplementedError, 'Algorithm.next(device)'
+        raise NotImplementedError, 'RoutingAlgorithm.next(device)'
 
     def update(self, packet):
         """
@@ -25,4 +25,4 @@ class RoutingAlgorithm:
         Implemented in each subclass.
         """
 
-        raise NotImplementedError, 'Algorithm.update(packet)'
+        raise NotImplementedError, 'RoutingAlgorithm.update(packet)'
