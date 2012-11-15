@@ -1,6 +1,6 @@
 from collections import deque
 from device import Device
-from linkTracker import LinkTracker
+from trackers.link import LinkTracker
 
 class Link:
     """

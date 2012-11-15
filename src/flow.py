@@ -1,5 +1,5 @@
 from device import Device
-from flowTracker import FlowTracker
+from trackers.flow import FlowTracker
 
 class Flow:
     """
@@ -53,6 +53,12 @@ class Flow:
         self._curr_seq_num += 1
 
         return self._curr_seq_num
+
+    def analyze(self, packet):
+        """
+        """
+
+        pass
 
     def window(self, size=None):
         """
