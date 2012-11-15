@@ -67,15 +67,15 @@ class Router(Device):
 
         for packet in packets:
             dest = packet.dest()
+
+            port = self._algorithm.next(dest)
+
+            # Checks that destination is reachable
+            if port is None:
+                continue
+
             flow = self._flows[dest]
-
             if flow.is_able() and flow.has_data():
-                port = self._algorithm.next(dest)
-
-                # Checks that destination is reachable
-                if port is None:
-                    continue
-
                 # Attaches a unique identifier (per flow) to the packet
                 packet.seq(flow.next_seq())
 
@@ -118,14 +118,15 @@ class Router(Device):
 
                     for packet in packets:
                         dest = packet.dest()
+                        port = self._algorithm.next(dest)
+
+                        # Checks that destination is reachable
+                        if port is None:
+                            continue
+
                         flow = self._flows[dest]
-
                         if flow.is_able() and flow.has_data():
-                            port = self._algorithm.next(dest)
-
-                            # Checks that destination is reachable
-                            if port is None:
-                                continue
+                            # TODO: send acknowledgment to packet source
 
                             # Attaches a unique identifier (per flow) to the packet
                             packet.seq(flow.next_seq())
@@ -140,14 +141,19 @@ class Router(Device):
 
                             events.append(update_event)
 
-                    # TODO: send acknowledgment to packet source
-
                 # TODO: otherwise, forward packet onward
                 #       (place in outgoing queue)
                 else:
                     port.outgoing().append(packet) # append right, pop left
 
                     # TODO: create send event at current time
+                    next_event = Event()
+                    next_event.scheduled(time)
+                    next_event.port(port)
+                    next_event.action(Event._SEND)
+                    next_event.packet(packet)
+
+                    events.append(next_event)
 
         elif action == Event._SEND:
             # Processes at most one outgoing packet
@@ -165,6 +171,8 @@ class Router(Device):
                 dest = link.dest()
 
                 dest.incoming().append(packet) # append right, pop left
+
+                # TODO: create timeout event at timeout length later
 
                 spawned_event = Event()
                 spawned_event.scheduled(time + prop_delay)
