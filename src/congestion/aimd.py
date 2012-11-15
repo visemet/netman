@@ -7,12 +7,12 @@ class AIMD(CongestionAlgorithm):
     """
 
     # Overrides CongestionAlgorithm.initialize(flow)
-	def initialize(self, flow)
-	    """
+    def initialize(self, flow):
+        """
         Initializes the congestion algorithm using the specified flow.
         """
-		
-		# Checks that flow is a Flow instance
+
+        # Checks that flow is a Flow instance
         if not isinstance(flow, Flow):
             raise TypeError, 'flow must be a Flow instance'
 
