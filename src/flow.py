@@ -6,7 +6,7 @@ class Flow:
     Builder for Flow instances.
     """
 
-    def __init__(self, algorithm):
+    def __init__(self, algorithm, window_size=1):
         """
         Creates a Flow instance with the specified congestion control
         algorithm.
@@ -17,6 +17,8 @@ class Flow:
         #     raise TypeError, 'algorithm must be a CongestionAlgorithm instance'
 
         self._algorithm = algorithm
+        self.window(window_size)
+        self.unack(0)
 
         self._num_bits = None
         self._start_time = None
@@ -34,7 +36,7 @@ class Flow:
         """
         """
 
-        return (self._algorithm.window() > self._algorithm.unack())
+        return (self.window() > self.unack())
 
     def has_data(self):
         """
@@ -51,6 +53,51 @@ class Flow:
         self._curr_seq_num += 1
 
         return self._curr_seq_num
+
+    def window(self, size=None):
+        """
+        window()     -> returns the window size
+
+        window(size) -> sets the window size as the specified value
+        """
+
+        if size is None:
+            return self._window_size
+
+        # Checks whether size is an int and converts to a float
+        if isinstance(size, int):
+            size = float(size)
+
+        # Checks that size is a float
+        if not isinstance(size, float):
+            raise TypeError, 'window size must be a float'
+
+        # Checks that size is positive
+        elif size <= 0:
+            raise ValueError, 'window size must be positive'
+
+        self._window_size = size
+
+    def unack(self, num=None):
+        """
+        unack()    -> returns the number of unacknowledged packets
+
+        unack(num) -> sets the number of unacknowledged packets as the
+                      specified value
+        """
+
+        if num is None:
+            return self._num_unack
+
+        # Checks that num is an int
+        if not isinstance(num, int):
+            raise TypeError, 'number of unacknowledged packets must be an int'
+
+        # Checks that num is nonnegative
+        elif num < 0:
+            raise ValueError, 'number of unacknowledged packets must be nonnegative'
+
+        self._num_unack = num
     
     def bits(self, num=None):
         """
