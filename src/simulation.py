@@ -65,6 +65,3 @@ class Simulation:
                 heappush(self._event_queue, spawned_event)
 
         # TODO: generate graphs from the statistics
-
-        for device in self._devices:
-            print (device, device._algorithm._routing_table)
