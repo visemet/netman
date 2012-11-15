@@ -28,7 +28,7 @@ class BellmanFord(RoutingAlgorithm):
             packet.datum(BellmanFord._COSTS, copy(self._costs))
             packet.datum(BellmanFord._TYPE, True)
 
-            packet[dest_device] = packet
+            packets[dest_device] = packet
 
         return packets
 
