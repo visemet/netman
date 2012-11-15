@@ -28,16 +28,22 @@ class CongestionAlgorithm:
         raise NotImplementedError, 'CongestionAlgorithm.handle_dropped_packet()'
     
     def Handle3DupAck(self, ndup):
+        pass
 
     def WindowDeflate(self, ssthresh):
+        pass
     
     def ssthresh(self, ssthresh=None):
+        pass
     
     def Initssthresh(self, Initssthresh=None):
+        pass
         
     def awnd(self, awnd=None):
+        pass
     
     def cwnd(self, cwnd=None): 
+        pass
     
     def state(self, state=None):
-    
+        pass
