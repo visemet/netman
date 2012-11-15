@@ -32,7 +32,7 @@ class BellmanFord(RoutingAlgorithm):
 
         return packets
 
-    # Overrides Algorithm.initialize(router)
+    # Overrides RoutingAlgorithm.initialize(router)
     def initialize(self, router):
         """
         Initializes the routing algorithm using the specified router.
@@ -58,7 +58,7 @@ class BellmanFord(RoutingAlgorithm):
         # Create packets with cost information to send to neighbors
         return self._notify()
 
-    # Overrides Algorithm.next(device)
+    # Overrides RoutingAlgorithm.next(device)
     def next(self, device):
         """
         Returns the port used to reach the specified device.
@@ -70,7 +70,7 @@ class BellmanFord(RoutingAlgorithm):
 
         return self._routing_table.get(device)
 
-    # Overrides Algorithm.update(packet)
+    # Overrides RoutingAlgorithm.update(packet)
     def update(self, packet):
         """
         Updates the routing algorithm using the specified packet.
