@@ -95,12 +95,36 @@ class Host(Device):
 
                 print >> sys.stderr, 'Host %s received packet %s' % (self, packet)
 
+                # TODO: check destination of packet
+
                 # TODO: handle acknowledgment received
+                if packet.has_datum(Packet._ACK):
+                    # TODO: have flow analyze acknowledgment received
+
+                    # TODO: create send event at current time
+
+                    pass
 
                 # TODO: otherwise, create acknowledgment packet
                 #       (place in outgoing queue)
+                else:
+                    ack = Packet()
+                    ack.source(self)
+                    ack.dest(packet.source())
+                    ack.datum(Packet._ACK, True)
 
-                # TODO: create send event at current time
+                    # Sets the unique identifier (per flow) for acknowledgment as packet received
+                    ack.seq(packet.seq())
+
+                    port.outgoing().append(ack) # append right, pop left
+
+                    ack_event = Event()
+                    ack_event.scheduled(time)
+                    ack_event.port(port)
+                    ack_event.action(Event._SEND)
+                    ack_event.packet(ack)
+
+                    events.append(ack_event)
 
         elif action == Event._SEND:
             # Processes at most one outgoing packet
@@ -108,6 +132,8 @@ class Host(Device):
                 # TODO: ensure window size is greater than number of outstanding packets
 
                 packet = port.outgoing().popleft() # append right, pop left
+
+                # TODO: notify flow that packet has been sent
 
                 print >> sys.stderr, 'Host %s sent packet %s' % (self, packet)
 
@@ -117,7 +143,11 @@ class Host(Device):
                 prop_delay = link.delay()
                 dest = link.dest()
 
+                # TODO: determine if packet "will be" lost
+
                 dest.incoming().append(packet) # append right, pop left
+
+                # TODO: notify link that packet sent, and potentially lost at a future time
 
                 # TODO: create timeout event at timeout length later
 

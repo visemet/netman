@@ -5,6 +5,8 @@ class Packet:
     Builder for Packet instances.
     """
 
+    _ACK = 'ack'
+
     def __init__(self):
         """
         Creates a Packet instance.
