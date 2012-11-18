@@ -6,6 +6,7 @@ class Event:
     Builder for Event instances.
     """
 
+    _CREATE = 'create'
     _RECEIVE = 'receive'
     _SEND = 'send'
     _TIMEOUT = 'timeout'

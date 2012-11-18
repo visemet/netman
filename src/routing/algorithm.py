@@ -19,6 +19,14 @@ class RoutingAlgorithm:
 
         raise NotImplementedError, 'RoutingAlgorithm.next(device)'
 
+    def prepare(self, packet):
+        """
+        Adds routing and cost information to the specified packet.
+        Implemented in each subclass.
+        """
+
+        raise NotImplementedError, 'RoutingAlgorithm.prepare(packet)'
+
     def update(self, packet):
         """
         Updates the routing algorithm using the specified packet.

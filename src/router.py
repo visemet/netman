@@ -60,13 +60,16 @@ class Router(Device):
             flow = Flow(None) # TODO: choose congestion algorithm
             flow.start(0)
             flow.dest(dest)
+
             self._flows[dest] = flow
 
         # Initializes the routing algorithm
-        packets = self._algorithm.initialize(self)
+        self._algorithm.initialize(self)
 
-        for packet in packets:
-            dest = packet.dest()
+        for (dest, flow) in self._flows.iteritems():
+            packet = Packet()
+            packet.source(self)
+            packet.dest(dest)
 
             port = self._algorithm.next(dest)
 
@@ -74,21 +77,14 @@ class Router(Device):
             if port is None:
                 continue
 
-            flow = self._flows[dest]
-            if flow.is_able() and flow.has_data():
-                # Attaches a unique identifier (per flow) to the packet
-                packet.seq(flow.next_seq())
+            # Creates an event for the starting time of the flow
+            event = Event()
+            event.scheduled(flow.start())
+            event.port(port)
+            event.action(Event._CREATE)
+            event.packet(packet)
 
-                port.outgoing().append(packet) # append right, pop left
-
-                # Creates an event for the starting time of the flow
-                event = Event()
-                event.scheduled(flow.start())
-                event.port(port)
-                event.action(Event._SEND)
-                event.packet(packet)
-
-                events.append(event)
+            events.append(event)
 
         return events
 
@@ -104,20 +100,56 @@ class Router(Device):
         port = event.port()
         action = event.action()
 
-        if action == Event._RECEIVE:
+        if action == Event._CREATE:
+            packet = event.packet()
+            dest = packet.dest()
+
+            flow = self._flows[dest]
+            if flow.is_able() and flow.has_data(): # always true
+                port = self._algorithm.next(dest)
+
+                if port is not None:
+                    # Attaches a unique identifier (per flow) to the packet
+                    packet.seq(flow.next_seq())
+
+                    # Adds routing and cost information to the packet
+                    self._algorithm.prepare(packet)
+
+                    port.outgoing().append(packet) # append right, pop left
+
+                    routing_event = Event()
+                    routing_event.scheduled(time)
+                    routing_event.port(port)
+                    routing_event.action(Event._SEND)
+                    routing_event.packet(packet)
+
+                    events.append(routing_event)
+
+        elif action == Event._RECEIVE:
             # Processes all received packets
             while port.incoming():
+                # Pops the packet off the head of the queue
                 packet = port.incoming().popleft() # append right, pop left
 
                 print >> sys.stderr, 'Router %s received packet %s' % (self, packet)
-                # exit()
 
-                # TODO: handle hello packet
-                if packet.has_datum(self._algorithm._TYPE):
-                    packets = self._algorithm.update(packet)
+                # Checks that packet was destined for this router
+                if packet.dest() == self:
+                    # Handles a hello packet
+                    if packet.has_datum(self._algorithm._TYPE):
+                        # TODO: send acknowledgment to packet source
 
-                    for packet in packets:
-                        dest = packet.dest()
+                        if not self._algorithm.update(packet):
+                            continue
+
+                        dest = packet.source()
+
+                        update_packet = Packet()
+                        update_packet.source(self)
+                        update_packet.dest(dest)
+
+                        self._algorithm.prepare(update_packet)
+
                         port = self._algorithm.next(dest)
 
                         # Checks that destination is reachable
@@ -126,8 +158,6 @@ class Router(Device):
 
                         flow = self._flows[dest]
                         if flow.is_able() and flow.has_data():
-                            # TODO: send acknowledgment to packet source
-
                             # Attaches a unique identifier (per flow) to the packet
                             packet.seq(flow.next_seq())
 
@@ -137,13 +167,15 @@ class Router(Device):
                             update_event.scheduled(time)
                             update_event.port(port)
                             update_event.action(Event._SEND)
-                            update_event.packet(packet)
+                            update_event.packet(update_packet)
 
                             events.append(update_event)
 
-                # TODO: otherwise, forward packet onward
-                #       (place in outgoing queue)
+                # Otherwise, forward packet onward
                 else:
+                    dest = packet.source()
+                    port = self._algorithm.next(dest)
+
                     port.outgoing().append(packet) # append right, pop left
 
                     # TODO: create send event at current time

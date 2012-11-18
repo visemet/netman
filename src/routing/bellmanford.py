@@ -13,26 +13,6 @@ class BellmanFord(RoutingAlgorithm):
     _COSTS = 'costs'
     _TYPE = 'bellman-ford'
 
-    def _notify(self, changed):
-        """
-        Adds packets containing the cost information to the outgoing
-        buffers of each port.
-        """
-
-        packets = []
-
-        if changed:
-            for dest_device in self._router.neighbors():
-                packet = Packet()
-                packet.source(self._router)
-                packet.dest(dest_device)
-                packet.datum(BellmanFord._COSTS, copy(self._costs))
-                packet.datum(BellmanFord._TYPE, True)
-
-                packets.append(packet)
-
-        return packets
-
     # Overrides RoutingAlgorithm.initialize(router)
     def initialize(self, router):
         """
@@ -56,9 +36,6 @@ class BellmanFord(RoutingAlgorithm):
             self._costs[dest] = cost
             self._routing_table[dest] = port
 
-        # Create packets with cost information to send to neighbors
-        return self._notify(True)
-
     # Overrides RoutingAlgorithm.next(device)
     def next(self, device):
         """
@@ -70,6 +47,19 @@ class BellmanFord(RoutingAlgorithm):
             raise TypeError, 'device must be a Device instance'
 
         return self._routing_table.get(device)
+
+    # Overrides RoutingAlgorithm.prepare(packet)
+    def prepare(self, packet):
+        """
+        Adds routing and cost information to the specified packet.
+        """
+
+        # Checks that packet is a Packet instance
+        if not isinstance(packet, Packet):
+            raise TypeError, 'packet must be a Packet instance'
+
+        packet.datum(BellmanFord._COSTS, copy(self._costs))
+        packet.datum(BellmanFord._TYPE, True)
 
     # Overrides RoutingAlgorithm.update(packet)
     def update(self, packet):
@@ -116,4 +106,4 @@ class BellmanFord(RoutingAlgorithm):
 
                 changed = True
 
-        return self._notify(changed)
+        return changed
