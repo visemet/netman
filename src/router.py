@@ -142,34 +142,32 @@ class Router(Device):
                         if not self._algorithm.update(packet):
                             continue
 
-                        dest = packet.source()
+                        for (dest, flow) in self._flows.iteritems():
+                            update_packet = Packet()
+                            update_packet.source(self)
+                            update_packet.dest(dest)
 
-                        update_packet = Packet()
-                        update_packet.source(self)
-                        update_packet.dest(dest)
+                            self._algorithm.prepare(update_packet)
 
-                        self._algorithm.prepare(update_packet)
+                            next_port = self._algorithm.next(dest)
 
-                        next_port = self._algorithm.next(dest)
+                            # Checks that destination is reachable
+                            if next_port is None:
+                                continue
 
-                        # Checks that destination is reachable
-                        if next_port is None:
-                            continue
+                            if flow.is_able() and flow.has_data():
+                                # Attaches a unique identifier (per flow) to the packet
+                                update_packet.seq(flow.next_seq())
 
-                        flow = self._flows[dest]
-                        if flow.is_able() and flow.has_data():
-                            # Attaches a unique identifier (per flow) to the packet
-                            update_packet.seq(flow.next_seq())
+                                next_port.outgoing().append(update_packet) # append right, pop left
 
-                            next_port.outgoing().append(update_packet) # append right, pop left
+                                update_event = Event()
+                                update_event.scheduled(time)
+                                update_event.port(next_port)
+                                update_event.action(Event._SEND)
+                                update_event.packet(update_packet)
 
-                            update_event = Event()
-                            update_event.scheduled(time)
-                            update_event.port(next_port)
-                            update_event.action(Event._SEND)
-                            update_event.packet(update_packet)
-
-                            events.append(update_event)
+                                events.append(update_event)
 
                 # Otherwise, forward packet onward
                 else:
