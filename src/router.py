@@ -106,20 +106,20 @@ class Router(Device):
 
             flow = self._flows[dest]
             if flow.is_able() and flow.has_data(): # always true
-                port = self._algorithm.next(dest)
+                next_port = self._algorithm.next(dest)
 
-                if port is not None:
+                if next_port is not None:
                     # Attaches a unique identifier (per flow) to the packet
                     packet.seq(flow.next_seq())
 
                     # Adds routing and cost information to the packet
                     self._algorithm.prepare(packet)
 
-                    port.outgoing().append(packet) # append right, pop left
+                    next_port.outgoing().append(packet) # append right, pop left
 
                     routing_event = Event()
                     routing_event.scheduled(time)
-                    routing_event.port(port)
+                    routing_event.port(next_port)
                     routing_event.action(Event._SEND)
                     routing_event.packet(packet)
 
@@ -150,22 +150,22 @@ class Router(Device):
 
                         self._algorithm.prepare(update_packet)
 
-                        port = self._algorithm.next(dest)
+                        next_port = self._algorithm.next(dest)
 
                         # Checks that destination is reachable
-                        if port is None:
+                        if next_port is None:
                             continue
 
                         flow = self._flows[dest]
                         if flow.is_able() and flow.has_data():
                             # Attaches a unique identifier (per flow) to the packet
-                            packet.seq(flow.next_seq())
+                            update_packet.seq(flow.next_seq())
 
-                            port.outgoing().append(packet) # append right, pop left
+                            next_port.outgoing().append(update_packet) # append right, pop left
 
                             update_event = Event()
                             update_event.scheduled(time)
-                            update_event.port(port)
+                            update_event.port(next_port)
                             update_event.action(Event._SEND)
                             update_event.packet(update_packet)
 
