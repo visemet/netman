@@ -53,26 +53,24 @@ class Host(Device):
         events = []
 
         # Iterates through each flow
-        for flow in self._flows.values():
+        for (dest, flow) in self._flows.iteritems():
             # Creates a packet to send
             packet = Packet()
             packet.source(self)
-            packet.dest(flow.dest())
+            packet.dest(dest)
 
-            if flow.is_able() and flow.has_data():
-                # Attaches a unique identifier (per flow) to the packet
-                packet.seq(flow.next_seq())
+            # Checks that destination is reachable
+            if self._port is None:
+                continue
 
-                self._port.outgoing().append(packet) # append right, pop left
+            # Creates an event for the starting time of the flow
+            event = Event()
+            event.scheduled(flow.start())
+            event.port(self._port)
+            event.action(Event._CREATE)
+            event.packet(packet)
 
-                # Creates an event for the starting time of the flow
-                event = Event()
-                event.scheduled(flow.start())
-                event.port(self._port)
-                event.action(Event._SEND)
-                event.packet(packet)
-
-                events.append(event)
+            events.append(event)
 
         return events
 
@@ -88,7 +86,27 @@ class Host(Device):
         port = event.port()
         action = event.action()
 
-        if action == Event._RECEIVE:
+        if action == Event._CREATE:
+            packet = event.packet()
+            dest = packet.dest()
+
+            flow = self._flows[dest]
+            if flow.is_able() and flow.has_data(): # always true
+                if self._port is not None:
+                    # Attaches a unique identifier (per flow) to the packet
+                    packet.seq(flow.next_seq())
+
+                    self._port.outgoing().append(packet) # append right, pop left
+
+                    routing_event = Event()
+                    routing_event.scheduled(time)
+                    routing_event.port(self._port)
+                    routing_event.action(Event._SEND)
+                    routing_event.packet(packet)
+
+                    events.append(routing_event)
+
+        elif action == Event._RECEIVE:
             # Processes all received packets
             while port.incoming():
                 packet = port.incoming().popleft() # append right, pop left
@@ -116,11 +134,11 @@ class Host(Device):
                     # Sets the unique identifier (per flow) for acknowledgment as packet received
                     ack.seq(packet.seq())
 
-                    port.outgoing().append(ack) # append right, pop left
+                    self._port.outgoing().append(ack) # append right, pop left
 
                     ack_event = Event()
                     ack_event.scheduled(time)
-                    ack_event.port(port)
+                    ack_event.port(self._port)
                     ack_event.action(Event._SEND)
                     ack_event.packet(ack)
 
