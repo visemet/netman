@@ -173,15 +173,19 @@ class Router(Device):
 
                 # Otherwise, forward packet onward
                 else:
-                    dest = packet.source()
-                    port = self._algorithm.next(dest)
+                    dest = packet.dest()
+                    next_port = self._algorithm.next(dest)
 
-                    port.outgoing().append(packet) # append right, pop left
+                    # Checks that destination is reachable
+                    if next_port is None:
+                        continue
+
+                    next_port.outgoing().append(packet) # append right, pop left
 
                     # TODO: create send event at current time
                     next_event = Event()
                     next_event.scheduled(time)
-                    next_event.port(port)
+                    next_event.port(next_port)
                     next_event.action(Event._SEND)
                     next_event.packet(packet)
 
