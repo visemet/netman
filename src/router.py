@@ -135,39 +135,67 @@ class Router(Device):
 
                 # Checks that packet was destined for this router
                 if packet.dest() == self:
-                    # Handles a hello packet
-                    if packet.has_datum(self._algorithm._TYPE):
-                        # TODO: send acknowledgment to packet source
+                    # TODO: handle acknowledgment received
+                    if packet.has_datum(Packet._ACK):
+                        continue
 
-                        if not self._algorithm.update(packet):
+                    changed = False
+
+                    # Updates the routing and cost information if necessary
+                    if packet.has_datum(self._algorithm._TYPE):
+                        changed = self._algorithm.update(packet)
+
+                    dest = packet.source()
+                    next_port = self._algorithm.next(dest)
+
+                    # Sends an acknowledgment to the source
+                    ack = Packet()
+                    ack.seq(packet.seq())
+                    ack.source(self)
+                    ack.dest(dest)
+                    ack.datum(Packet._ACK, True)
+
+                    next_port.outgoing().append(ack) # append right, pop left
+
+                    ack_event = Event()
+                    ack_event.scheduled(time)
+                    ack_event.port(next_port)
+                    ack_event.action(Event._SEND)
+                    ack_event.packet(ack)
+
+                    events.append(ack_event)
+
+                    # Checks that routing or cost information has changed
+                    if not changed:
+                        continue
+
+                    # Handles a hello packet
+                    for (dest, flow) in self._flows.iteritems():
+                        update_packet = Packet()
+                        update_packet.source(self)
+                        update_packet.dest(dest)
+
+                        self._algorithm.prepare(update_packet)
+
+                        next_port = self._algorithm.next(dest)
+
+                        # Checks that destination is reachable
+                        if next_port is None:
                             continue
 
-                        for (dest, flow) in self._flows.iteritems():
-                            update_packet = Packet()
-                            update_packet.source(self)
-                            update_packet.dest(dest)
+                        if flow.is_able() and flow.has_data():
+                            # Attaches a unique identifier (per flow) to the packet
+                            update_packet.seq(flow.next_seq())
 
-                            self._algorithm.prepare(update_packet)
+                            next_port.outgoing().append(update_packet) # append right, pop left
 
-                            next_port = self._algorithm.next(dest)
+                            update_event = Event()
+                            update_event.scheduled(time)
+                            update_event.port(next_port)
+                            update_event.action(Event._SEND)
+                            update_event.packet(update_packet)
 
-                            # Checks that destination is reachable
-                            if next_port is None:
-                                continue
-
-                            if flow.is_able() and flow.has_data():
-                                # Attaches a unique identifier (per flow) to the packet
-                                update_packet.seq(flow.next_seq())
-
-                                next_port.outgoing().append(update_packet) # append right, pop left
-
-                                update_event = Event()
-                                update_event.scheduled(time)
-                                update_event.port(next_port)
-                                update_event.action(Event._SEND)
-                                update_event.packet(update_packet)
-
-                                events.append(update_event)
+                            events.append(update_event)
 
                 # Otherwise, forward packet onward
                 else:
