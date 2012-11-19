@@ -113,36 +113,57 @@ class Host(Device):
 
                 print >> sys.stderr, 'Host %s received packet %s' % (self, packet)
 
-                # TODO: check destination of packet
+                # Checks that packet was destined for this host
+                if packet.dest() == self:
+                    # TODO: handle acknowledgment received
+                    if packet.has_datum(Packet._ACK):
+                        # TODO: have flow analyze acknowledgment received
 
-                # TODO: handle acknowledgment received
-                if packet.has_datum(Packet._ACK):
-                    # TODO: have flow analyze acknowledgment received
+                        dest = packet.source()
 
-                    # TODO: create send event at current time
+                        flow = self._flows[dest]
+                        if flow.is_able() and flow.has_data(): # always true
+                            if self._port is not None:
+                                next_packet = Packet()
+                                next_packet.source(self)
+                                next_packet.dest(dest)
 
-                    pass
+                                # Attaches a unique identifier (per flow) to the packet
+                                next_packet.seq(flow.next_seq())
 
-                # TODO: otherwise, create acknowledgment packet
-                #       (place in outgoing queue)
-                else:
-                    ack = Packet()
-                    ack.source(self)
-                    ack.dest(packet.source())
-                    ack.datum(Packet._ACK, True)
+                                self._port.outgoing().append(next_packet) # append right, pop left
 
-                    # Sets the unique identifier (per flow) for acknowledgment as packet received
-                    ack.seq(packet.seq())
+                                next_event = Event()
+                                next_event.scheduled(time)
+                                next_event.port(self._port)
+                                next_event.action(Event._SEND)
+                                next_event.packet(next_packet)
 
-                    self._port.outgoing().append(ack) # append right, pop left
+                                events.append(next_event)
 
-                    ack_event = Event()
-                    ack_event.scheduled(time)
-                    ack_event.port(self._port)
-                    ack_event.action(Event._SEND)
-                    ack_event.packet(ack)
+                    # TODO: otherwise, create acknowledgment packet
+                    #       (place in outgoing queue)
+                    else:
+                        dest = packet.source()
 
-                    events.append(ack_event)
+                        ack = Packet()
+                        ack.source(self)
+                        ack.dest(dest)
+                        ack.datum(Packet._ACK, True)
+
+                        # Sets the unique identifier (per flow) for acknowledgment as packet received
+                        ack.seq(packet.seq())
+
+                        self._port.outgoing().append(ack) # append right, pop left
+
+                        ack_event = Event()
+                        ack_event.scheduled(time)
+                        ack_event.port(self._port)
+                        ack_event.action(Event._SEND)
+                        ack_event.packet(ack)
+
+                        events.append(ack_event)
+                        
 
         elif action == Event._SEND:
             # Processes at most one outgoing packet
