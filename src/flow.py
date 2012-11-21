@@ -66,10 +66,9 @@ class Flow:
         time = event.scheduled()
         packet = event.packet()
 
-        if action == Event._SEND:
-            if not packet.has_datum(Packet._ACK):
-                self._tracker.record_sent(time)
-        elif action == Event._RECEIVE:
+        if action == Event._SEND and not packet.has_datum(Packet._ACK):
+            self._tracker.record_sent(time)
+        elif action == Event._RECEIVE and packet.has_datum(Packet._ACK):
             self._tracker.record_received(time)
 
     def prepare(self, packet):
