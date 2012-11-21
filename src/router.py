@@ -131,7 +131,7 @@ class Router(Device):
                 # Pops the packet off the head of the queue
                 packet = port.incoming().popleft() # append right, pop left
 
-                print >> sys.stderr, 'Router %s received packet %s' % (self, packet)
+                print >> sys.stderr, '[%.3f] Router %s received packet %s' % (time, self, packet)
 
                 # Checks that packet was destined for this router
                 if packet.dest() == self:
@@ -145,7 +145,7 @@ class Router(Device):
 
                         if flow is not None:
                             flow.analyze(event)
-                            print >> sys.stderr, 'Router %s has received %d packets at %s' % (self, len(flow._tracker._times_received), flow._tracker._times_received)
+                            # print >> sys.stderr, 'Router %s has received %d packets at %s%s' % (self, len(flow._tracker._times_received), flow.dest(), flow._tracker._times_received)
 
                         continue
 
@@ -234,7 +234,7 @@ class Router(Device):
                 packet = port.outgoing().popleft() # append right, pop left
                 event.packet(packet)
 
-                print >> sys.stderr, 'Router %s sent packet %s' % (self, packet)
+                print >> sys.stderr, '[%.3f] Router %s sent packet %s' % (time, self, packet)
 
                 # TODO: forward packet onward
                 #       (place in incoming queue of next hop)
@@ -249,9 +249,8 @@ class Router(Device):
                     flow = self._flows.get(packet.dest())
 
                     if flow is not None:
-                        print >> sys.stderr, 'Router %s has sent %d packets at %s' % (self, len(flow._tracker._times_sent), flow._tracker._times_sent)
                         flow.analyze(event)
-                        print >> sys.stderr, 'Router %s has sent %d packets at %s' % (self, len(flow._tracker._times_sent), flow._tracker._times_sent)
+                        # print >> sys.stderr, 'Router %s has sent %d packets at %s%s' % (self, len(flow._tracker._times_sent), flow.dest(), flow._tracker._times_sent)
 
 
                 # TODO: create timeout event at timeout length later
