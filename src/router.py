@@ -127,7 +127,7 @@ class Router(Device):
 
         elif action == Event._RECEIVE:
             # Processes all received packets
-            while port.incoming():
+            if port.incoming():
                 # Pops the packet off the head of the queue
                 packet = port.incoming().popleft() # append right, pop left
 
@@ -146,65 +146,59 @@ class Router(Device):
                         if flow is not None:
                             flow.analyze(event)
                             # print >> sys.stderr, 'Router %s has received %d packets at %s%s' % (self, len(flow._tracker._times_received), flow.dest(), flow._tracker._times_received)
+                    else:
+                        changed = False
 
-                        continue
-
-                    changed = False
-
-                    # Updates the routing and cost information if necessary
-                    if packet.has_datum(self._algorithm._TYPE):
-                        changed = self._algorithm.update(packet)
-
-                    next_port = self._algorithm.next(dest)
-
-                    # Sends an acknowledgment to the source
-                    ack = Packet()
-                    ack.seq(packet.seq())
-                    ack.source(self)
-                    ack.dest(dest)
-                    ack.datum(Packet._ACK, True)
-
-                    next_port.outgoing().append(ack) # append right, pop left
-
-                    ack_event = Event()
-                    ack_event.scheduled(time)
-                    ack_event.port(next_port)
-                    ack_event.action(Event._SEND)
-                    # ack_event.packet(ack)
-
-                    events.append(ack_event)
-
-                    # Checks that routing or cost information has changed
-                    if not changed:
-                        continue
-
-                    # Handles a hello packet
-                    for (dest, flow) in self._flows.iteritems():
-                        update_packet = Packet()
-                        update_packet.source(self)
-                        update_packet.dest(dest)
-
-                        self._algorithm.prepare(update_packet)
+                        # Updates the routing and cost information if necessary
+                        if packet.has_datum(self._algorithm._TYPE):
+                            changed = self._algorithm.update(packet)
 
                         next_port = self._algorithm.next(dest)
 
-                        # Checks that destination is reachable
-                        if next_port is None:
-                            continue
+                        # Sends an acknowledgment to the source
+                        ack = Packet()
+                        ack.seq(packet.seq())
+                        ack.source(self)
+                        ack.dest(dest)
+                        ack.datum(Packet._ACK, True)
 
-                        if flow.is_able() and flow.has_data():
-                            # Attaches a unique identifier (per flow) to the packet
-                            update_packet.seq(flow.next_seq())
+                        next_port.outgoing().append(ack) # append right, pop left
 
-                            next_port.outgoing().append(update_packet) # append right, pop left
+                        ack_event = Event()
+                        ack_event.scheduled(time)
+                        ack_event.port(next_port)
+                        ack_event.action(Event._SEND)
+                        # ack_event.packet(ack)
 
-                            update_event = Event()
-                            update_event.scheduled(time)
-                            update_event.port(next_port)
-                            update_event.action(Event._SEND)
-                            # update_event.packet(update_packet)
+                        events.append(ack_event)
 
-                            events.append(update_event)
+                        # Checks that routing or cost information has changed
+                        if changed:
+                            # Handles a hello packet
+                            for (dest, flow) in self._flows.iteritems():
+                                update_packet = Packet()
+                                update_packet.source(self)
+                                update_packet.dest(dest)
+
+                                self._algorithm.prepare(update_packet)
+
+                                next_port = self._algorithm.next(dest)
+
+                                # Checks that destination is reachable
+                                if next_port is not None:
+                                    if flow.is_able() and flow.has_data():
+                                        # Attaches a unique identifier (per flow) to the packet
+                                        update_packet.seq(flow.next_seq())
+
+                                        next_port.outgoing().append(update_packet) # append right, pop left
+
+                                        update_event = Event()
+                                        update_event.scheduled(time)
+                                        update_event.port(next_port)
+                                        update_event.action(Event._SEND)
+                                        # update_event.packet(update_packet)
+
+                                        events.append(update_event)
 
                 # Otherwise, forward packet onward
                 else:
@@ -212,19 +206,17 @@ class Router(Device):
                     next_port = self._algorithm.next(dest)
 
                     # Checks that destination is reachable
-                    if next_port is None:
-                        continue
+                    if next_port is not None:
+                        next_port.outgoing().append(packet) # append right, pop left
 
-                    next_port.outgoing().append(packet) # append right, pop left
+                        # TODO: create send event at current time
+                        next_event = Event()
+                        next_event.scheduled(time)
+                        next_event.port(next_port)
+                        next_event.action(Event._SEND)
+                        next_event.packet(packet)
 
-                    # TODO: create send event at current time
-                    next_event = Event()
-                    next_event.scheduled(time)
-                    next_event.port(next_port)
-                    next_event.action(Event._SEND)
-                    next_event.packet(packet)
-
-                    events.append(next_event)
+                        events.append(next_event)
 
         elif action == Event._SEND:
             # Processes at most one outgoing packet
