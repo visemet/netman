@@ -1,4 +1,6 @@
 from device import Device
+from event import Event
+from packet import Packet
 from trackers.flow import FlowTracker
 
 class Flow:
@@ -25,6 +27,8 @@ class Flow:
         self._dest_device = None
 
         self._curr_seq_num = 0
+
+        self._tracker = FlowTracker()
 
     def getTracker(self):
         '''
@@ -54,7 +58,21 @@ class Flow:
 
         return self._curr_seq_num
 
-    def analyze(self, packet):
+    def analyze(self, event):
+        """
+        """
+
+        action = event.action()
+        time = event.scheduled()
+        packet = event.packet()
+
+        if action == Event._SEND:
+            if not packet.has_datum(Packet._ACK):
+                self._tracker.record_sent(time)
+        elif action == Event._RECEIVE:
+            self._tracker.record_received(time)
+
+    def prepare(self, packet):
         """
         """
 

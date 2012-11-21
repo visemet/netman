@@ -135,8 +135,17 @@ class Router(Device):
 
                 # Checks that packet was destined for this router
                 if packet.dest() == self:
+                    dest = packet.source()
+
                     # TODO: handle acknowledgment received
                     if packet.has_datum(Packet._ACK):
+                        # Updates packet statistics of flow
+                        flow = self._flows.get(dest)
+
+                        if flow is not None:
+                            flow.analyze(event)
+                            print 'Router %s has received %d packets' % (self, len(flow._tracker._times_received))
+
                         continue
 
                     changed = False
@@ -145,7 +154,6 @@ class Router(Device):
                     if packet.has_datum(self._algorithm._TYPE):
                         changed = self._algorithm.update(packet)
 
-                    dest = packet.source()
                     next_port = self._algorithm.next(dest)
 
                     # Sends an acknowledgment to the source
@@ -224,7 +232,7 @@ class Router(Device):
 
                 packet = port.outgoing().popleft() # append right, pop left
 
-                print >> sys.stderr, 'Router %s sent packet %s' % (self, packet)
+                print >> sys.stderr, 'Router %s has sent packet %s' % (self, packet)
 
                 # TODO: forward packet onward
                 #       (place in incoming queue of next hop)
@@ -233,6 +241,14 @@ class Router(Device):
                 dest = link.dest()
 
                 dest.incoming().append(packet) # append right, pop left
+
+                if packet.source() == self:
+                    # Updates packet statistics of flow
+                    flow = self._flows.get(dest.source())
+
+                    if flow is not None:
+                        flow.analyze(event)
+                        print 'Router %s sent %d packets' % (self, len(flow._tracker._times_sent))
 
                 # TODO: create timeout event at timeout length later
 

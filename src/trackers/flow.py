@@ -13,9 +13,28 @@ class FlowTracker:
             lists are lists of times at which the packet was sent or received
             
         """
+
+        self._times_sent = []
+        self._times_received = []
+
         self._packetsSent = 0
         self._packetsReceived = 0
-        return self
+
+    def record_sent(self, time):
+        """
+        Adds an entry in the history to indicate a packet was sent at
+        the specified time.
+        """
+
+        self._times_sent.append(time)
+
+    def record_received(self, time):
+        """
+        Adds an entry in the history to indicate a packet was received
+        at the specified time.
+        """
+
+        self._times_received.append(time)
 
     def packetSent(self, time):
         """
