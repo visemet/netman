@@ -121,7 +121,7 @@ class Router(Device):
                     routing_event.scheduled(time)
                     routing_event.port(next_port)
                     routing_event.action(Event._SEND)
-                    routing_event.packet(packet)
+                    # routing_event.packet(packet)
 
                     events.append(routing_event)
 
@@ -136,6 +136,7 @@ class Router(Device):
                 # Checks that packet was destined for this router
                 if packet.dest() == self:
                     dest = packet.source()
+                    event.packet(packet)
 
                     # TODO: handle acknowledgment received
                     if packet.has_datum(Packet._ACK):
@@ -144,7 +145,7 @@ class Router(Device):
 
                         if flow is not None:
                             flow.analyze(event)
-                            print 'Router %s has received %d packets' % (self, len(flow._tracker._times_received))
+                            print >> sys.stderr, 'Router %s has received %d packets at %s' % (self, len(flow._tracker._times_received), flow._tracker._times_received)
 
                         continue
 
@@ -169,7 +170,7 @@ class Router(Device):
                     ack_event.scheduled(time)
                     ack_event.port(next_port)
                     ack_event.action(Event._SEND)
-                    ack_event.packet(ack)
+                    # ack_event.packet(ack)
 
                     events.append(ack_event)
 
@@ -201,7 +202,7 @@ class Router(Device):
                             update_event.scheduled(time)
                             update_event.port(next_port)
                             update_event.action(Event._SEND)
-                            update_event.packet(update_packet)
+                            # update_event.packet(update_packet)
 
                             events.append(update_event)
 
@@ -231,8 +232,9 @@ class Router(Device):
                 # TODO: ensure window size is greater than number of outstanding packets
 
                 packet = port.outgoing().popleft() # append right, pop left
+                event.packet(packet)
 
-                print >> sys.stderr, 'Router %s has sent packet %s' % (self, packet)
+                print >> sys.stderr, 'Router %s sent packet %s' % (self, packet)
 
                 # TODO: forward packet onward
                 #       (place in incoming queue of next hop)
@@ -244,11 +246,13 @@ class Router(Device):
 
                 if packet.source() == self:
                     # Updates packet statistics of flow
-                    flow = self._flows.get(dest.source())
+                    flow = self._flows.get(packet.dest())
 
                     if flow is not None:
+                        print >> sys.stderr, 'Router %s has sent %d packets at %s' % (self, len(flow._tracker._times_sent), flow._tracker._times_sent)
                         flow.analyze(event)
-                        print 'Router %s sent %d packets' % (self, len(flow._tracker._times_sent))
+                        print >> sys.stderr, 'Router %s has sent %d packets at %s' % (self, len(flow._tracker._times_sent), flow._tracker._times_sent)
+
 
                 # TODO: create timeout event at timeout length later
 
@@ -256,7 +260,7 @@ class Router(Device):
                 spawned_event.scheduled(time + prop_delay)
                 spawned_event.port(dest)
                 spawned_event.action(Event._RECEIVE)
-                spawned_event.packet(packet)
+                # spawned_event.packet(packet)
 
                 events.append(spawned_event)
 
