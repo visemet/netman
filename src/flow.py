@@ -73,9 +73,13 @@ class Flow:
 
     def prepare(self, packet):
         """
+        Prepares the specified packet for sending.
+        Attaches the sequence number.
         """
 
-        pass
+        # TODO: verify destination of packet
+
+        packet.seq(self.next_seq())
 
     def window(self, size=None):
         """
