@@ -47,6 +47,48 @@ class Router(Device):
 
         return [port.conn().dest().source() for port in self._ports]
 
+    def _create_packet(self, source, dest):
+        """
+        Creates a packet instance with the specified source and
+        destination devices.
+        """
+
+        packet = Packet()
+        packet.source(source)
+        packet.dest(dest)
+
+        return packet
+
+    def _create_ack(self, packet):
+        """
+        Creates an acknowledgment in reponse to the specified packet.
+        """
+
+        num = packet.seq()
+        source = packet.dest()
+        dest = packet.source()
+
+        ack = self._create_packet(source, dest)
+
+        ack.seq(num)
+        ack.datum(Packet._ACK, True)
+
+        return ack
+
+    def _create_event(self, time, port, action, packet):
+        """
+        Creates an Event instance with the specified time, port, action
+        and packet.
+        """
+
+        event = Event()
+        event.scheduled(time)
+        event.port(port)
+        event.action(action)
+        event.packet(packet)
+
+        return event
+
     # Overrides Device.initialize()
     def initialize(self):
         """
@@ -67,9 +109,7 @@ class Router(Device):
         self._algorithm.initialize(self)
 
         for (dest, flow) in self._flows.iteritems():
-            packet = Packet()
-            packet.source(self)
-            packet.dest(dest)
+            packet = self._create_packet(self, dest)
 
             port = self._algorithm.next(dest)
 
@@ -78,11 +118,7 @@ class Router(Device):
                 continue
 
             # Creates an event for the starting time of the flow
-            event = Event()
-            event.scheduled(flow.start())
-            event.port(port)
-            event.action(Event._CREATE)
-            event.packet(packet)
+            event = self._create_event(flow.start(), port, Event._CREATE, packet)
 
             events.append(event)
 
@@ -110,18 +146,14 @@ class Router(Device):
 
                 if next_port is not None:
                     # Attaches a unique identifier (per flow) to the packet
-                    packet.seq(flow.next_seq())
+                    flow.prepare(packet)
 
                     # Adds routing and cost information to the packet
                     self._algorithm.prepare(packet)
 
                     next_port.outgoing().append(packet) # append right, pop left
 
-                    routing_event = Event()
-                    routing_event.scheduled(time)
-                    routing_event.port(next_port)
-                    routing_event.action(Event._SEND)
-                    # routing_event.packet(packet)
+                    routing_event = self._create_event(time, next_port, Event._SEND, packet)
 
                     events.append(routing_event)
 
@@ -156,19 +188,11 @@ class Router(Device):
                         next_port = self._algorithm.next(dest)
 
                         # Sends an acknowledgment to the source
-                        ack = Packet()
-                        ack.seq(packet.seq())
-                        ack.source(self)
-                        ack.dest(dest)
-                        ack.datum(Packet._ACK, True)
+                        ack = self._create_ack(packet)
 
                         next_port.outgoing().append(ack) # append right, pop left
 
-                        ack_event = Event()
-                        ack_event.scheduled(time)
-                        ack_event.port(next_port)
-                        ack_event.action(Event._SEND)
-                        # ack_event.packet(ack)
+                        ack_event = self._create_event(time, next_port, Event._SEND, ack)
 
                         events.append(ack_event)
 
@@ -176,9 +200,7 @@ class Router(Device):
                         if changed:
                             # Handles a hello packet
                             for (dest, flow) in self._flows.iteritems():
-                                update_packet = Packet()
-                                update_packet.source(self)
-                                update_packet.dest(dest)
+                                update_packet = self._create_packet(self, dest)
 
                                 self._algorithm.prepare(update_packet)
 
@@ -188,15 +210,11 @@ class Router(Device):
                                 if next_port is not None:
                                     if flow.is_able() and flow.has_data():
                                         # Attaches a unique identifier (per flow) to the packet
-                                        update_packet.seq(flow.next_seq())
+                                        flow.prepare(update_packet)
 
                                         next_port.outgoing().append(update_packet) # append right, pop left
 
-                                        update_event = Event()
-                                        update_event.scheduled(time)
-                                        update_event.port(next_port)
-                                        update_event.action(Event._SEND)
-                                        # update_event.packet(update_packet)
+                                        update_event = self._create_event(time, next_port, Event._SEND, update_packet)
 
                                         events.append(update_event)
 
@@ -209,12 +227,8 @@ class Router(Device):
                     if next_port is not None:
                         next_port.outgoing().append(packet) # append right, pop left
 
-                        # TODO: create send event at current time
-                        next_event = Event()
-                        next_event.scheduled(time)
-                        next_event.port(next_port)
-                        next_event.action(Event._SEND)
-                        next_event.packet(packet)
+                        # Creates a send event at the current time
+                        next_event = self._create_event(time, next_port, Event._SEND, packet)
 
                         events.append(next_event)
 
@@ -247,11 +261,7 @@ class Router(Device):
 
                 # TODO: create timeout event at timeout length later
 
-                spawned_event = Event()
-                spawned_event.scheduled(time + prop_delay)
-                spawned_event.port(dest)
-                spawned_event.action(Event._RECEIVE)
-                # spawned_event.packet(packet)
+                spawned_event = self._create_event(time + prop_delay, dest, Event._RECEIVE, packet)
 
                 events.append(spawned_event)
 
