@@ -56,6 +56,7 @@ class Router(Device):
         packet = Packet()
         packet.source(source)
         packet.dest(dest)
+        packet.size(Packet._DATA_SIZE)
 
         return packet
 
@@ -71,6 +72,7 @@ class Router(Device):
         ack = self._create_packet(source, dest)
 
         ack.seq(num)
+        ack.size(Packet._ACK_SIZE)
         ack.datum(Packet._ACK, True)
 
         return ack

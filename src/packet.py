@@ -7,6 +7,9 @@ class Packet:
 
     _ACK = 'ack'
 
+    _DATA_SIZE = 8000
+    _ACK_SIZE = 512
+
     def __init__(self):
         """
         Creates a Packet instance.
@@ -15,6 +18,7 @@ class Packet:
         # Initializes attributes as None
         self._id = None
         self._source = None
+        self._bits_size = None
         self._dest = None
 
         # Initializes the packet data
@@ -79,6 +83,22 @@ class Packet:
             raise TypeError, 'device must be a Device instance'
 
         self._dest = device
+
+    def size(self, bits=None):
+        """
+        size()     -> returns the packet size
+
+        size(bits) -> sets the packet size as the specified value
+        """
+
+        if bits is None:
+            return self._bits_size
+
+        # Checks that bits is an int
+        if not isinstance(bits, int):
+            raise TypeError, 'bits must be an int'
+
+        self._bits_size = bits
 
     def has_datum(self, key):
         """
