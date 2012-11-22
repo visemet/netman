@@ -124,6 +124,154 @@ class Router(Device):
 
         return events
 
+    def _handle_create(self, event):
+        """
+        Handles create events.
+        """
+
+        events = []
+
+        time = event.scheduled()
+        packet = event.packet()
+
+        dest = packet.dest()
+
+        flow = self._flows[dest]
+        if flow.is_able() and flow.has_data(): # always true
+            next_port = self._algorithm.next(dest)
+
+            if next_port is not None:
+                # Attaches a unique identifier (per flow) to the packet
+                flow.prepare(packet)
+
+                # Adds routing and cost information to the packet
+                self._algorithm.prepare(packet)
+
+                next_port.outgoing().append(packet) # append right, pop left
+
+                routing_event = self._create_event(time, next_port, Event._SEND, packet)
+
+                events.append(routing_event)
+
+        return events
+
+    def _handle_receive(self, event):
+        """
+        Handles receive events.
+        """
+
+        events = []
+
+        time = event.scheduled()
+        packet = event.packet()
+
+        # Checks that packet was destined for this router
+        if packet.dest() == self:
+            dest = packet.source()
+
+            # TODO: handle acknowledgment received
+            if packet.has_datum(Packet._ACK):
+                # Updates packet statistics of flow
+                flow = self._flows.get(dest)
+
+                if flow is not None:
+                    flow.analyze(event)
+                    # print >> sys.stderr, 'Router %s has received %d packets at %s%s' % (self, len(flow._tracker._times_received), flow.dest(), flow._tracker._times_received)
+            else:
+                changed = False
+
+                # Updates the routing and cost information if necessary
+                if packet.has_datum(self._algorithm._TYPE):
+                    changed = self._algorithm.update(packet)
+
+                next_port = self._algorithm.next(dest)
+
+                # Sends an acknowledgment to the source
+                ack = self._create_ack(packet)
+
+                next_port.outgoing().append(ack) # append right, pop left
+
+                ack_event = self._create_event(time, next_port, Event._SEND, ack)
+
+                events.append(ack_event)
+
+                # Checks that routing or cost information has changed
+                if changed:
+                    # Handles a hello packet
+                    for (dest, flow) in self._flows.iteritems():
+                        update_packet = self._create_packet(self, dest)
+
+                        self._algorithm.prepare(update_packet)
+
+                        next_port = self._algorithm.next(dest)
+
+                        # Checks that destination is reachable
+                        if next_port is not None:
+                            if flow.is_able() and flow.has_data():
+                                # Attaches a unique identifier (per flow) to the packet
+                                flow.prepare(update_packet)
+
+                                next_port.outgoing().append(update_packet) # append right, pop left
+
+                                update_event = self._create_event(time, next_port, Event._SEND, update_packet)
+
+                                events.append(update_event)
+
+        # Otherwise, forward packet onward
+        else:
+            dest = packet.dest()
+            next_port = self._algorithm.next(dest)
+
+            # Checks that destination is reachable
+            if next_port is not None:
+                next_port.outgoing().append(packet) # append right, pop left
+
+                # Creates a send event at the current time
+                next_event = self._create_event(time, next_port, Event._SEND, packet)
+
+                events.append(next_event)
+
+        return events
+
+    def _handle_send(self, event):
+        """
+        Handles send events.
+        """
+
+        events = []
+
+        time = event.scheduled()
+        port = event.port()
+        packet = event.packet()
+
+        # TODO: forward packet onward
+        #       (place in incoming queue of next hop)
+        link = port.conn()
+        prop_delay = link.delay()
+        dest = link.dest()
+
+        dest.incoming().append(packet) # append right, pop left
+
+        if packet.source() == self:
+            # Updates packet statistics of flow
+            flow = self._flows.get(packet.dest())
+
+            if flow is not None:
+                flow.analyze(event)
+                # print >> sys.stderr, 'Router %s has sent %d packets at %s%s' % (self, len(flow._tracker._times_sent), flow.dest(), flow._tracker._times_sent)
+
+
+        # TODO: create timeout event at timeout length later
+
+        spawned_event = self._create_event(time + prop_delay, dest, Event._RECEIVE, packet)
+
+        events.append(spawned_event)
+
+        # TODO: create send event at tranmission delay later
+        # trans_delay = packet.size() / link.rate()
+
+        return events
+
     # Overrides Device.process(event)
     def process(self, event):
         """
@@ -133,104 +281,22 @@ class Router(Device):
         events = []
 
         time = event.scheduled()
-        port = event.port()
         action = event.action()
+        port = event.port()
 
         if action == Event._CREATE:
-            packet = event.packet()
-            dest = packet.dest()
-
-            flow = self._flows[dest]
-            if flow.is_able() and flow.has_data(): # always true
-                next_port = self._algorithm.next(dest)
-
-                if next_port is not None:
-                    # Attaches a unique identifier (per flow) to the packet
-                    flow.prepare(packet)
-
-                    # Adds routing and cost information to the packet
-                    self._algorithm.prepare(packet)
-
-                    next_port.outgoing().append(packet) # append right, pop left
-
-                    routing_event = self._create_event(time, next_port, Event._SEND, packet)
-
-                    events.append(routing_event)
+            events.extend(self._handle_create(event))
 
         elif action == Event._RECEIVE:
             # Processes all received packets
             if port.incoming():
                 # Pops the packet off the head of the queue
                 packet = port.incoming().popleft() # append right, pop left
+                event.packet(packet)
 
                 print >> sys.stderr, '[%.3f] Router %s received packet %s' % (time, self, packet)
 
-                # Checks that packet was destined for this router
-                if packet.dest() == self:
-                    dest = packet.source()
-                    event.packet(packet)
-
-                    # TODO: handle acknowledgment received
-                    if packet.has_datum(Packet._ACK):
-                        # Updates packet statistics of flow
-                        flow = self._flows.get(dest)
-
-                        if flow is not None:
-                            flow.analyze(event)
-                            # print >> sys.stderr, 'Router %s has received %d packets at %s%s' % (self, len(flow._tracker._times_received), flow.dest(), flow._tracker._times_received)
-                    else:
-                        changed = False
-
-                        # Updates the routing and cost information if necessary
-                        if packet.has_datum(self._algorithm._TYPE):
-                            changed = self._algorithm.update(packet)
-
-                        next_port = self._algorithm.next(dest)
-
-                        # Sends an acknowledgment to the source
-                        ack = self._create_ack(packet)
-
-                        next_port.outgoing().append(ack) # append right, pop left
-
-                        ack_event = self._create_event(time, next_port, Event._SEND, ack)
-
-                        events.append(ack_event)
-
-                        # Checks that routing or cost information has changed
-                        if changed:
-                            # Handles a hello packet
-                            for (dest, flow) in self._flows.iteritems():
-                                update_packet = self._create_packet(self, dest)
-
-                                self._algorithm.prepare(update_packet)
-
-                                next_port = self._algorithm.next(dest)
-
-                                # Checks that destination is reachable
-                                if next_port is not None:
-                                    if flow.is_able() and flow.has_data():
-                                        # Attaches a unique identifier (per flow) to the packet
-                                        flow.prepare(update_packet)
-
-                                        next_port.outgoing().append(update_packet) # append right, pop left
-
-                                        update_event = self._create_event(time, next_port, Event._SEND, update_packet)
-
-                                        events.append(update_event)
-
-                # Otherwise, forward packet onward
-                else:
-                    dest = packet.dest()
-                    next_port = self._algorithm.next(dest)
-
-                    # Checks that destination is reachable
-                    if next_port is not None:
-                        next_port.outgoing().append(packet) # append right, pop left
-
-                        # Creates a send event at the current time
-                        next_event = self._create_event(time, next_port, Event._SEND, packet)
-
-                        events.append(next_event)
+                events.extend(self._handle_receive(event))
 
         elif action == Event._SEND:
             # Processes at most one outgoing packet
@@ -242,30 +308,6 @@ class Router(Device):
 
                 print >> sys.stderr, '[%.3f] Router %s sent packet %s' % (time, self, packet)
 
-                # TODO: forward packet onward
-                #       (place in incoming queue of next hop)
-                link = port.conn()
-                prop_delay = link.delay()
-                dest = link.dest()
-
-                dest.incoming().append(packet) # append right, pop left
-
-                if packet.source() == self:
-                    # Updates packet statistics of flow
-                    flow = self._flows.get(packet.dest())
-
-                    if flow is not None:
-                        flow.analyze(event)
-                        # print >> sys.stderr, 'Router %s has sent %d packets at %s%s' % (self, len(flow._tracker._times_sent), flow.dest(), flow._tracker._times_sent)
-
-
-                # TODO: create timeout event at timeout length later
-
-                spawned_event = self._create_event(time + prop_delay, dest, Event._RECEIVE, packet)
-
-                events.append(spawned_event)
-
-                # TODO: create send event at tranmission delay later
-                # trans_delay = packet.size() / link.rate()
+                events.extend(self._handle_send(event))
 
         return events
