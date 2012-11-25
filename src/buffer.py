@@ -4,10 +4,12 @@ from packet import Packet
 
 class Buffer:
     """
+    Builder for Buffer instances.
     """
 
     def __init__(self, max_size):
         """
+        Creates a Buffer instance with the specified maximum size.
         """
 
         self._max_size = max_size
@@ -17,12 +19,15 @@ class Buffer:
 
     def __len__(self):
         """
+        Returns the length of the buffer.
         """
 
         return len(self._deque)
 
     def has_space(self, packet):
         """
+        Returns True if the buffer has space for the specified packet,
+        and False otherwise.
         """
 
         # Checks that packet is a Packet instance
@@ -33,6 +38,7 @@ class Buffer:
 
     def append(self, packet):
         """
+        Adds the specified packet to the tail of the buffer.
         """
 
         # Checks that packet is a Packet instance
@@ -45,6 +51,7 @@ class Buffer:
 
     def popleft(self):
         """
+        Removes and returns the packet at the head of the buffer.
         """
 
         packet = self._deque.popleft()
