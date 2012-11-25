@@ -27,6 +27,7 @@ class Flow:
         self._dest_device = None
 
         self._curr_seq_num = 0
+        self._unack_packets = []
 
         self._tracker = FlowTracker()
 
@@ -68,8 +69,21 @@ class Flow:
 
         if action == Event._SEND and not packet.has_datum(Packet._ACK):
             self._tracker.record_sent(time)
+
+            self._unack_packets.append(packet.seq())
         elif action == Event._RECEIVE and packet.has_datum(Packet._ACK):
             self._tracker.record_received(time)
+
+            # self._algorithm.handle_ack_received()
+            self._unack_packets.remove(packet.seq())
+
+        num_unack = len(self._unack_packets)
+        if num_unack > 1:
+            # TODO: handle 3 duplicate acknowledgments received
+            if (self._unack_packets[1] - self._unack_packets[0]) > 3:
+                pass
+
+        self.unack(num_unack)
 
     def prepare(self, packet):
         """
