@@ -20,7 +20,7 @@ class LinkTracker:
         """
             given the time a packet was sent, add it to the list
         """
-        self.times_sent.append(time)
+        self._times_sent.append(time)
     
     def add_packet_loss(self, time, num=1):
         """

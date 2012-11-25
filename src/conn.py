@@ -7,6 +7,13 @@ class Link:
     Builder for Link instances.
     """
 
+    def __init__(self):
+        """
+        Creates a Link instance.
+        """
+
+        self._tracker = LinkTracker()
+
     def __repr__(self):
         """
         Defines the string representation for a Link instance.
