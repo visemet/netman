@@ -2,6 +2,7 @@ from heapq import heappush, heappop
 
 from device import Device
 from event import Event
+from router import Router
 
 class Simulation:
     """
@@ -44,6 +45,13 @@ class Simulation:
             for event in events:
                 heappush(self._event_queue, event)
 
+    def _finalize(self):
+        """
+        Finalizes the simulation.
+        """
+
+        pass
+
     def start(self):
         """
         Starts the simulation and executes it until completion.
@@ -65,3 +73,23 @@ class Simulation:
                 heappush(self._event_queue, spawned_event)
 
         # TODO: generate graphs from the statistics
+        return self._finalize()
+
+class TestBellmanFord(Simulation):
+    """
+    Simulation that verifies the Bellman-Ford algorithm.
+    """
+
+    # Overrides Simulation._finalize()
+    def _finalize(self):
+        """
+        Finalizes the simulation by returning the routing tables.
+        """
+
+        routing_tables = {}
+
+        for device in self._devices:
+            if isinstance(device, Router):
+                routing_tables[device] = device._algorithm._routing_table
+
+        return routing_tables

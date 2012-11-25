@@ -1,5 +1,5 @@
 from algorithm import CongestionAlgorithm
-from flow import Flow
+# from flow import Flow
 
 class AIMD(CongestionAlgorithm):
     """
