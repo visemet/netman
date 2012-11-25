@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
-from collections import deque
 from sys import argv
 
+from buffer import Buffer
 from congestion.aimd import AIMD
 from conn import Link, Port
 from flow import Flow
@@ -83,14 +83,14 @@ class Setup:
                 source_port = Port()
                 source_port.source(source_device)
                 source_port.conn(dest_link)
-                source_port.incoming(deque())
-                source_port.outgoing(deque())
+                source_port.incoming(Buffer(size))
+                source_port.outgoing(Buffer(size))
 
                 dest_port = Port()
                 dest_port.source(dest_device)
                 dest_port.conn(source_link)
-                dest_port.incoming(deque())
-                dest_port.outgoing(deque())
+                dest_port.incoming(Buffer(size))
+                dest_port.outgoing(Buffer(size))
 
                 source_link.dest(source_port)
                 source_link.rate(rate)

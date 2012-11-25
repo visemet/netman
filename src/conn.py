@@ -1,4 +1,4 @@
-from collections import deque
+from buffer import Buffer
 from device import Device
 from trackers.link import LinkTracker
 
@@ -144,9 +144,9 @@ class Port:
         if queue is None:
             return self._incoming_queue
 
-        # Checks that queue is a deque
-        if not isinstance(queue, deque):
-            raise TypeError, 'queue must be a deque'
+        # Checks that queue is a Buffer instance
+        if not isinstance(queue, Buffer):
+            raise TypeError, 'queue must be a Buffer instance'
 
         self._incoming_queue = queue
 
@@ -160,8 +160,8 @@ class Port:
         if queue is None:
             return self._outgoing_queue
 
-        # Checks that queue is a deque
-        if not isinstance(queue, deque):
-            raise TypeError, 'queue must be a deque'
+        # Checks that queue is a Buffer instance
+        if not isinstance(queue, Buffer):
+            raise TypeError, 'queue must be a Buffer instance'
 
         self._outgoing_queue = queue
