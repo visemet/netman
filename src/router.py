@@ -252,7 +252,12 @@ class Router(Device):
         prop_delay = link.delay()
         dest = link.dest()
 
-        dest.incoming().append(packet) # append right, pop left
+        queue = dest.incoming()
+        if queue.has_space(packet):
+            queue.append(packet) # append right, pop left
+
+            spawned_event = self._create_event(time + prop_delay, dest, Event._RECEIVE, packet)
+            events.append(spawned_event)
 
         if packet.source() == self:
             # Updates packet statistics of flow
@@ -264,10 +269,6 @@ class Router(Device):
 
 
         # TODO: create timeout event at timeout length later
-
-        spawned_event = self._create_event(time + prop_delay, dest, Event._RECEIVE, packet)
-
-        events.append(spawned_event)
 
         # TODO: create send event at tranmission delay later
         # trans_delay = packet.size() / link.rate()
