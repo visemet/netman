@@ -44,6 +44,50 @@ class Host(Device):
 
         self._flows[flow.dest()] = flow
 
+    def _create_packet(self, source, dest):
+        """
+        Creates a packet instance with the specified source and
+        destination devices.
+        """
+
+        packet = Packet()
+        packet.source(source)
+        packet.dest(dest)
+        packet.size(Packet._DATA_SIZE)
+
+        return packet
+
+    def _create_ack(self, packet):
+        """
+        Creates an acknowledgment in reponse to the specified packet.
+        """
+
+        num = packet.seq()
+        source = packet.dest()
+        dest = packet.source()
+
+        ack = self._create_packet(source, dest)
+
+        ack.seq(num)
+        ack.size(Packet._ACK_SIZE)
+        ack.datum(Packet._ACK, True)
+
+        return ack
+
+    def _create_event(self, time, port, action, packet):
+        """
+        Creates an Event instance with the specified time, port, action
+        and packet.
+        """
+
+        event = Event()
+        event.scheduled(time)
+        event.port(port)
+        event.action(action)
+        event.packet(packet)
+
+        return event
+
     # Overrides Device.initialize()
     def initialize(self):
         """
@@ -55,22 +99,139 @@ class Host(Device):
         # Iterates through each flow
         for (dest, flow) in self._flows.iteritems():
             # Creates a packet to send
-            packet = Packet()
-            packet.source(self)
-            packet.dest(dest)
+            packet = self._create_packet(self, dest)
 
             # Checks that destination is reachable
             if self._port is None:
                 continue
 
             # Creates an event for the starting time of the flow
-            event = Event()
-            event.scheduled(flow.start())
-            event.port(self._port)
-            event.action(Event._CREATE)
-            event.packet(packet)
+            event = self._create_event(flow.start(), self._port, Event._CREATE, packet)
 
             events.append(event)
+
+        return events
+
+    def _handle_create(self, event):
+        """
+        Handles create events.
+        """
+
+        events = []
+
+        time = event.scheduled()
+        packet = event.packet()
+
+        dest = packet.dest()
+
+        flow = self._flows[dest]
+        if flow.is_able() and flow.has_data():
+
+            # Checks that destination is reachable
+            if self._port is not None:
+                # Attaches a unique identifier (per flow) to the packet
+                flow.prepare(packet)
+
+                self._port.outgoing().append(packet) # append right, pop left
+
+                send_event = self._create_event(time, self._port, Event._SEND, packet)
+
+                events.append(send_event)
+
+        return events
+
+    def _handle_receive(self, event):
+        """
+        Handles receive events.
+        """
+
+        events = []
+
+        time = event.scheduled()
+        packet = event.packet()
+
+        # Checks that packet was destined for this host
+        if packet.dest() == self:
+            dest = packet.source()
+
+            # Handles acknowledgment received
+            if packet.has_datum(Packet._ACK):
+                # Updates packet statistics of the flow
+                flow = self._flows.get(dest)
+
+                if flow is not None:
+                    flow.analyze(event)
+
+                    if flow.is_able() and flow.has_data():
+
+                        # Checks that destination is reachable
+                        if self._port is not None:
+                            next_packet = self._create_packet(self, dest)
+
+                            # Attaches a unique identifier (per flow) to the packet
+                            flow.prepare(next_packet)
+
+                            self._port.outgoing().append(next_packet) # append right, pop left
+
+                            send_event = self._create_event(time, self._port, Event._SEND, next_packet)
+
+                            events.append(send_event)
+
+            # Otherwise, creates an acknowledgment packet
+            else:
+                ack = self._create_ack(packet)
+
+                self._port.outgoing().append(ack) # append right, pop left
+
+                ack_event = self._create_event(time, self._port, Event._SEND, ack)
+
+                events.append(ack_event)
+
+        return events
+
+    def _handle_send(self, event):
+        """
+        Handles send events.
+        """
+
+        events = []
+
+        time = event.scheduled()
+        port = event.port()
+        packet = event.packet()
+
+        link = port.conn()
+        prop_delay = link.delay()
+        dest = link.dest()
+
+        queue = dest.incoming()
+
+        # Checks if the room for packet on receiving end
+        if not queue.has_space(packet):
+            pass
+
+            # TODO: notify link that packet was dropped
+
+        # Otherwise, forwards packet onward
+        else:
+            queue.append(packet) # append right, pop left
+
+            # TODO: notify link that packet was sent
+
+            receive_event = self._create_event(time + prop_delay, dest, Event._RECEIVE, packet)
+            events.append(receive_event)
+
+        if packet.source() == self:
+            # Updates packet statistics of flow
+            flow = self._flows.get(packet.dest())
+
+            if flow is not None:
+                flow.analyze(event)
+
+        # TODO: create timeout event at timeout length later
+
+        # TODO: create send event at tranmission delay later
+        # trans_delay = packet.size() / link.rate()
 
         return events
 
@@ -87,83 +248,18 @@ class Host(Device):
         action = event.action()
 
         if action == Event._CREATE:
-            packet = event.packet()
-            dest = packet.dest()
-
-            flow = self._flows[dest]
-            if flow.is_able() and flow.has_data(): # always true
-                if self._port is not None:
-                    # Attaches a unique identifier (per flow) to the packet
-                    packet.seq(flow.next_seq())
-
-                    self._port.outgoing().append(packet) # append right, pop left
-
-                    routing_event = Event()
-                    routing_event.scheduled(time)
-                    routing_event.port(self._port)
-                    routing_event.action(Event._SEND)
-                    routing_event.packet(packet)
-
-                    events.append(routing_event)
+            events.extend(self._handle_create(event))
 
         elif action == Event._RECEIVE:
             # Processes all received packets
-            while port.incoming():
+            if port.incoming():
+                # Pops the packet off the head of the queue
                 packet = port.incoming().popleft() # append right, pop left
+                event.packet(packet)
 
-                print >> sys.stderr, 'Host %s received packet %s' % (self, packet)
+                print >> sys.stderr, '[%.3f] Host %s received packet %s' % (time, self, packet)
 
-                # Checks that packet was destined for this host
-                if packet.dest() == self:
-                    # TODO: handle acknowledgment received
-                    if packet.has_datum(Packet._ACK):
-                        # TODO: have flow analyze acknowledgment received
-
-                        dest = packet.source()
-
-                        flow = self._flows[dest]
-                        if flow.is_able() and flow.has_data(): # always true
-                            if self._port is not None:
-                                next_packet = Packet()
-                                next_packet.source(self)
-                                next_packet.dest(dest)
-
-                                # Attaches a unique identifier (per flow) to the packet
-                                next_packet.seq(flow.next_seq())
-
-                                self._port.outgoing().append(next_packet) # append right, pop left
-
-                                next_event = Event()
-                                next_event.scheduled(time)
-                                next_event.port(self._port)
-                                next_event.action(Event._SEND)
-                                next_event.packet(next_packet)
-
-                                events.append(next_event)
-
-                    # TODO: otherwise, create acknowledgment packet
-                    #       (place in outgoing queue)
-                    else:
-                        dest = packet.source()
-
-                        ack = Packet()
-                        ack.source(self)
-                        ack.dest(dest)
-                        ack.datum(Packet._ACK, True)
-
-                        # Sets the unique identifier (per flow) for acknowledgment as packet received
-                        ack.seq(packet.seq())
-
-                        self._port.outgoing().append(ack) # append right, pop left
-
-                        ack_event = Event()
-                        ack_event.scheduled(time)
-                        ack_event.port(self._port)
-                        ack_event.action(Event._SEND)
-                        ack_event.packet(ack)
-
-                        events.append(ack_event)
-                        
+                events.extend(self._handle_receive(event))
 
         elif action == Event._SEND:
             # Processes at most one outgoing packet
@@ -171,34 +267,10 @@ class Host(Device):
                 # TODO: ensure window size is greater than number of outstanding packets
 
                 packet = port.outgoing().popleft() # append right, pop left
+                event.packet(packet)
 
-                # TODO: notify flow that packet has been sent
+                print >> sys.stderr, '[%.3f] Host %s sent packet %s' % (time, self, packet)
 
-                print >> sys.stderr, 'Host %s sent packet %s' % (self, packet)
-
-                # TODO: forward packet onward
-                #       (place in incoming queue of next hop)
-                link = port.conn()
-                prop_delay = link.delay()
-                dest = link.dest()
-
-                # TODO: determine if packet "will be" lost
-
-                dest.incoming().append(packet) # append right, pop left
-
-                # TODO: notify link that packet sent, and potentially lost at a future time
-
-                # TODO: create timeout event at timeout length later
-
-                spawned_event = Event()
-                spawned_event.scheduled(time + prop_delay)
-                spawned_event.port(dest)
-                spawned_event.action(Event._RECEIVE)
-                spawned_event.packet(packet)
-
-                events.append(spawned_event)
-
-                # TODO: create send event at tranmission delay later
-                # trans_delay = packet.size() / link.rate()
+                events.extend(self._handle_send(event))
 
         return events
