@@ -86,6 +86,15 @@ class Link:
             raise TypeError, 'port must be a Port instance'
 
         self._dest_port = port
+        
+    def record_sent(self, time):
+        self._tracker.record_sent(time)
+        
+    def record_packet_loss(self, time):
+        self._tracker.add_packet_loss(time)
+        
+    def record_buffer_size(self, time, size):
+        self._tracker.record_buffer_size(time, size)
 
 class Port:
     """

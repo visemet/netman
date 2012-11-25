@@ -232,7 +232,12 @@ class Router(Device):
                 next_event = self._create_event(time, next_port, Event._SEND, packet)
 
                 events.append(next_event)
-
+        
+        #record buffer size of incoming buffer
+        port = event.port()
+        link = port.conn()
+        buffer = port.incoming()
+        link.record_buffer_size(time, buffer.__len__)
         return events
 
     def _handle_send(self, event):
@@ -258,6 +263,9 @@ class Router(Device):
 
             spawned_event = self._create_event(time + prop_delay, dest, Event._RECEIVE, packet)
             events.append(spawned_event)
+        
+        else: # no room, record the dropped packet
+            link.record_packet_loss(time)
 
         if packet.source() == self:
             # Updates packet statistics of flow
@@ -267,6 +275,9 @@ class Router(Device):
                 flow.analyze(event)
                 # print >> sys.stderr, 'Router %s has sent %d packets at %s%s' % (self, len(flow._tracker._times_sent), flow.dest(), flow._tracker._times_sent)
 
+        # update the link tracker with the sent and the current buffer size
+        link.record_sent(time)
+        link.record_buffer_size(time, len(queue))
 
         # TODO: create timeout event at timeout length later
 
