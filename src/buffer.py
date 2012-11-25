@@ -24,6 +24,13 @@ class Buffer:
 
         return len(self._deque)
 
+    def size(self):
+        """
+        Returns the size of the buffer.
+        """
+
+        return self._curr_size
+
     def has_space(self, packet):
         """
         Returns True if the buffer has space for the specified packet,
@@ -34,7 +41,7 @@ class Buffer:
         if not isinstance(packet, Packet):
             raise TypeError, 'packet must be a Packet instance'
 
-        return (self._curr_size + packet.size() <= self._max_size)
+        return (self.size() + packet.size() <= self._max_size)
 
     def append(self, packet):
         """
