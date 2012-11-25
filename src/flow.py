@@ -70,6 +70,10 @@ class Flow:
         if action == Event._SEND and not packet.has_datum(Packet._ACK):
             self._tracker.record_sent(time)
 
+            num_bits = self.bits()
+            if num_bits is not None:
+                self.bits(num_bits - packet.size())
+
             self._unack_packets.append(packet.seq())
         elif action == Event._RECEIVE and packet.has_datum(Packet._ACK):
             self._tracker.record_received(time)
@@ -154,9 +158,9 @@ class Flow:
         if not isinstance(num, int):
             raise TypeError, 'number of bits must be an int'
 
-        # Checks that num is positive
-        elif num <= 0:
-            raise ValueError, 'number of bits must be positive'
+        # Checks that num is nonnegative
+        elif num < 0:
+            raise ValueError, 'number of bits must be nonnegative'
 
         self._num_bits = num
 
