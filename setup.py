@@ -11,6 +11,8 @@ from router import Router
 from routing.bellmanford import BellmanFord
 from simulation import Simulation
 
+
+
 class Setup:
     """
     # Hosts
