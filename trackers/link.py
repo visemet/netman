@@ -34,6 +34,7 @@ class LinkTracker:
         """
         self._bufferSize.append((time,size))
 
+    # return points in a form that simulation.generate_graph will accept
     #return list of (time, num) where num is the number of packets lost at
     # that moment in time
     def getPacketLossData():
@@ -46,8 +47,10 @@ class LinkTracker:
         returnValue = []
         for time,val in packetLossData:
             returnValue.append((time,val))
+        returnValue.sort() #sort by first value, which is time
         return returnValue
     
+    # return points in a form that simulation.generate_graph will accept
     # return list of (time, num) where num is the number of packets sent at that 
     #  time
     def getLinkRateData():
@@ -61,6 +64,7 @@ class LinkTracker:
         returnValue = []
         for time, value in linkRateData:
             returnValue.append((time,value))
+        returnValue.sort() #sort by first value, which is time
         return returnValue
     
     #return list of (time, num) where num is the occupancy of the buffer at
