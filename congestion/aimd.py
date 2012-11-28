@@ -1,5 +1,5 @@
 from algorithm import CongestionAlgorithm
-# from flow import Flow
+from flow import Flow
 
 class AIMD(CongestionAlgorithm):
     """
@@ -7,7 +7,7 @@ class AIMD(CongestionAlgorithm):
     """
 
     # Overrides CongestionAlgorithm.initialize(flow)
-    def initialize(self, flow, cwnd, awnd, ssthresh, gamma=None, alpha=None):
+    def initialize(self, flow, cwnd=1, awnd=1, ssthresh=0, gamma=0.1, alpha=50):
         """
         Initializes the congestion algorithm using the specified flow.
         """
@@ -18,15 +18,12 @@ class AIMD(CongestionAlgorithm):
 
         self._flow = flow
         
-        if (gamma is None) & (alpha is None) :
-            # set value of cwnd, awnd and ssthresh
-            self._flow.window(cwnd)
-            self.awnd(awnd)
-            self.ssthresh(ssthresh)
-            self.Initssthresh(ssthresh)
-            self.state('SS')
-        else :
-            raise ValueError, 'not a valid argument'
+        # set value of cwnd, awnd and ssthresh
+        self._flow.window(cwnd)
+        self.awnd(awnd)
+        self.ssthresh(ssthresh)
+        self.Initssthresh(ssthresh)
+        self.state('SS')
 
     # Overrides CongestionAlgorithm.handle_ack_received()
     def handle_ack_received(self):
@@ -97,8 +94,8 @@ class AIMD(CongestionAlgorithm):
             return self._ssthresh
 
         # Checks that ssthresh is positive
-        elif ssthresh<= 0:
-            raise ValueError, 'ssthresh must be positive'
+        elif ssthresh < 0:
+            raise ValueError, 'ssthresh must be nonnegative'
 
         self._ssthresh = ssthresh
 
@@ -114,8 +111,8 @@ class AIMD(CongestionAlgorithm):
             return self._Initssthresh
 
         # Checks that ssthresh is positive
-        elif Initssthresh<= 0:
-            raise ValueError, 'ssthresh must be positive'
+        elif Initssthresh < 0:
+            raise ValueError, 'ssthresh must be nonnegative'
 
         self._Initssthresh = Initssthresh
             
