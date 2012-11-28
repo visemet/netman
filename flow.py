@@ -75,11 +75,15 @@ class Flow:
                 self.bits(num_bits - packet.size())
 
             self._unack_packets.append(packet.seq())
+
         elif action == Event._RECEIVE and packet.has_datum(Packet._ACK):
             self._tracker.record_received(time)
 
-            # self._algorithm.handle_ack_received()
+            self._algorithm.handle_ack_received()
             self._unack_packets.remove(packet.seq())
+
+        elif action == Event._TIMEOUT:
+            self._algorithm.handle_timeout()
 
         num_unack = len(self._unack_packets)
         if num_unack > 1:

@@ -26,7 +26,10 @@ class CongestionAlgorithm:
         """
 
         raise NotImplementedError, 'CongestionAlgorithm.handle_dropped_packet()'
-    
+
+    def handle_timeout(self):
+        pass
+
     def Handle3DupAck(self, ndup):
         pass
 

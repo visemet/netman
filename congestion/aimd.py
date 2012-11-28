@@ -55,7 +55,26 @@ class AIMD(CongestionAlgorithm):
         cwnd = self.cwnd()      
 
         if self.state() is 'CA':                       
-            self._flow.window(float(cwnd)/float(2))  
+            self._flow.window(float(cwnd)/float(2))
+
+    # Overrides CongestionAlgorithm.handle_timeout()
+    def handle_timeout(self):
+        """
+        handles time out 
+        """
+        # Get current cwnd and check if the state is 
+        # SS or CA
+        cwnd = self._flow.window()
+        prev_state = self.state()
+        
+        # If SS, cwnd = 1 and go to CA
+        # If CA, half cwnd and go to SS
+        if (prev_state is 'SS'):
+            self.state('CA')
+            self._flow.window(1)
+        elif (prev_state is 'CA'):
+            self.state('SS')
+            self._flow.window(float(cwnd)/float(2))
 
     def Handle3DupAck(self, ndup):
         """
