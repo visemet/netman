@@ -1,5 +1,6 @@
 import sys
 
+from congestion.aimd import AIMD
 from conn import Port
 from device import Device
 from event import Event
@@ -101,9 +102,13 @@ class Router(Device):
 
         # Creates a flow for each neighbor of the router
         for dest in self.neighbors():
-            flow = Flow(None) # TODO: choose congestion algorithm
+            congestion = AIMD()
+
+            flow = Flow(congestion) # TODO: choose congestion algorithm
             flow.start(0)
             flow.dest(dest)
+
+            congestion.initialize(flow)
 
             self._flows[dest] = flow
 
@@ -286,6 +291,29 @@ class Router(Device):
 
         return events
 
+    def _handle_timeout(self, event):
+        """
+        Handles timeout events.
+        """
+
+        events = []
+
+        time = event.scheduled()
+        port = event.port()
+        packet = event.packet()
+
+        dest = packet.dest()
+
+        # Updates packet statistics of flow
+        flow = self._flows.get(dest)
+
+        if flow is not None:
+            flow.analyze(event)
+
+        # TODO: necessary to create send event at current time?
+
+        return events
+
     # Overrides Device.process(event)
     def process(self, event):
         """
@@ -323,5 +351,8 @@ class Router(Device):
                 print >> sys.stderr, '[%.3f] Router %s sent packet %s' % (time, self, packet)
 
                 events.extend(self._handle_send(event))
+
+        elif action == Event._TIMEOUT:
+            events.extend(self._handle_timeout(event))
 
         return events
