@@ -114,10 +114,14 @@ class Setup:
                 size = int(size)
                 time = float(time)
 
-                flow = Flow(AIMD())
+                congestion = AIMD()
+
+                flow = Flow(congestion)
                 flow.bits(size)
                 flow.start(time)
                 flow.dest(dest_device)
+
+                congestion.initialize(flow)
 
                 source_device.connect(flow)
 
