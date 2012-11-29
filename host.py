@@ -124,19 +124,22 @@ class Host(Device):
 
         dest = packet.dest()
 
-        flow = self._flows[dest]
-        if flow.is_able() and flow.has_data():
+        flow = self._flows.get(dest)
 
-            # Checks that destination is reachable
-            if self._port is not None:
-                # Attaches a unique identifier (per flow) to the packet
-                flow.prepare(packet)
+        if flow is not None:
 
-                self._port.outgoing().append(packet) # append right, pop left
+            if flow.is_able() and flow.has_data():
 
-                send_event = self._create_event(time, self._port, Event._SEND, packet)
+                # Checks that destination is reachable
+                if self._port is not None:
+                    # Attaches a unique identifier (per flow) to the packet
+                    flow.prepare(packet)
 
-                events.append(send_event)
+                    self._port.outgoing().append(packet) # append right, pop left
+
+                    send_event = self._create_event(time, self._port, Event._SEND, packet)
+
+                    events.append(send_event)
 
         return events
 
@@ -159,23 +162,20 @@ class Host(Device):
                 # Updates packet statistics of the flow
                 flow = self._flows.get(dest)
 
+                should_create = False
+
                 if flow is not None:
+                    should_create = not flow.is_able()
+
                     flow.analyze(event)
 
-                    if flow.is_able() and flow.has_data():
+                # Only create a create event if previously unable to send
+                if should_create:
+                    next_packet = self._create_packet(self, dest)
 
-                        # Checks that destination is reachable
-                        if self._port is not None:
-                            next_packet = self._create_packet(self, dest)
+                    create_event = self._create_event(time, self._port, Event._CREATE, next_packet)
 
-                            # Attaches a unique identifier (per flow) to the packet
-                            flow.prepare(next_packet)
-
-                            self._port.outgoing().append(next_packet) # append right, pop left
-
-                            send_event = self._create_event(time, self._port, Event._SEND, next_packet)
-
-                            events.append(send_event)
+                    events.append(create_event)
 
             # Otherwise, creates an acknowledgment packet
             else:
@@ -231,7 +231,13 @@ class Host(Device):
         # TODO: create timeout event at timeout length later
 
         # TODO: create send event at tranmission delay later
-        # trans_delay = packet.size() / link.rate()
+        trans_delay = float(packet.size()) / float(link.rate())
+
+        next_packet = self._create_packet(self, dest.source())
+
+        create_event = self._create_event(time + trans_delay, self._port, Event._CREATE, next_packet)
+
+        events.append(create_event)
 
         return events
 
