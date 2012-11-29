@@ -6,6 +6,9 @@ class AIMD(CongestionAlgorithm):
     Logic for Additive Increase, Multiplicative Decrease algorithm.
     """
 
+    _SS = 'ss'
+    _CA = 'ca'
+
     # Overrides CongestionAlgorithm.initialize(flow)
     def initialize(self, flow, cwnd=1, awnd=1, ssthresh=0, gamma=0.1, alpha=50):
         """
@@ -35,13 +38,13 @@ class AIMD(CongestionAlgorithm):
         cwnd = self._flow.window()
         prev_state = self.state()
             
-        if (prev_state is 'SS') & (cwnd > self.ssthresh()):
-            self.state('CA')    
-            self._flow.window(1)
-        elif (cwnd > self.ssthresh()):
-            self.state('SS')
-            self._flow.window(1)
-        elif self.state() is 'SS':
+        # if (prev_state is 'SS') & (cwnd > self.ssthresh()):
+        #     self.state('CA')
+        #     self._flow.window(1)
+        # elif (cwnd > self.ssthresh()):
+        #     self.state('SS')
+        #     self._flow.window(1)
+        if self.state() is 'SS':
             self._flow.window(cwnd + 1)
         elif self.state() is 'CA':
             self._flow.window(cwnd + float(1)/float(cwnd))
