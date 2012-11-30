@@ -35,7 +35,47 @@ class Link:
         return the linkTracker instance
         '''
         return self._tracker
-    
+
+    def record_sent(self, time):
+        """
+        Records the time when a packet is sent.
+        """
+
+        self._tracker.record_sent(time)
+        
+    def record_packet_loss(self, time):
+        """
+        Records the time when a packet is lost.
+        """
+
+        self._tracker.record_packet_loss(time)
+        
+    def record_buffer_size(self, time, size):
+        """
+        Records the buffer size at a certain time.
+        """
+
+        self._tracker.record_buffer_size(time, size)
+
+    def record_round_trip(self, time, rtt):
+        """
+        Records the round trip time at a certain time.
+        """
+
+        self._tracker.record_round_trip(time, rtt)
+
+    def rtt(self):
+        """
+        Returns the average round trip time of the link.
+        """
+
+        average_rtt = self._tracker.average_rtt(-1)
+
+        if average_rtt == -1:
+            return 3 * self.delay()
+
+        return average_rtt
+
     def delay(self, delay=None):
         """
         delay()      -> returns the delay
@@ -93,15 +133,6 @@ class Link:
             raise TypeError, 'port must be a Port instance'
 
         self._dest_port = port
-        
-    def record_sent(self, time):
-        self._tracker.record_sent(time)
-        
-    def record_packet_loss(self, time):
-        self._tracker.add_packet_loss(time)
-        
-    def record_buffer_size(self, time, size):
-        self._tracker.record_buffer_size(time, size)
 
 class Port:
     """

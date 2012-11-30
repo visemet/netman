@@ -12,34 +12,68 @@ class LinkTracker:
             empty times_sent list
             
         """
-        self._times_sent = []
-        self._packetLosses = []
-        self._bufferSize = [] # list of tuples of time,size
+
+        self._times_sent = [] # list of times
+
+        self._packet_losses = [] # list of times
+
+        self._buffer_sizes = [] # list of tuples (time, size)
+
+        self._round_trips = [] # list of tuples (time, rtt)
         
     def record_sent(self, time):
         """
-            given the time a packet was sent, add it to the list
+        Records the time when a packet is sent.
         """
+
         self._times_sent.append(time)
     
-    def add_packet_loss(self, time, num=1):
+    def record_packet_loss(self, time):
         """
-        records a packet loss at a given time
+        Records the time when a packet is lost.
         """
-        self._packetLosses.append(num, time)
+
+        self._packet_losses.append(time)
         
     def record_buffer_size(self, time, size):
         """
-            given the time and size, record as tuple in the list
+        Records the buffer size at a certain time.
         """
-        self._bufferSize.append((time,size))
+
+        self._buffer_sizes.append((time,size))
+
+    def record_round_trip(self, time, rtt):
+        """
+        Records the round trip time at a certain time.
+        """
+
+        self._round_trips.append((time, rtt))
+
+    def average_rtt(self, since):
+        """
+        """
+
+        sum_rtt = 0
+        count_rtt = 0
+
+        for (time, rtt) in reversed(self._round_trips):
+            if time < since:
+                break
+
+            sum_rtt += rtt
+            count_rtt += 1
+
+        if count_rtt == 0:
+            return -1
+
+        return (float(sum_rtt) / float(count_rtt))
 
     # return points in a form that simulation.generate_graph will accept
     #return list of (time, num) where num is the number of packets lost at
     # that moment in time
     def getPacketLossData():
         packetLossData ={}
-        for num,time in self._packetLosses:
+        for num,time in self._packet_losses:
             if time in packetLossData.keys():
                 packetLossData[time] += 1
             else:
@@ -70,4 +104,4 @@ class LinkTracker:
     #return list of (time, num) where num is the occupancy of the buffer at
     # that point in time
     def getBufferOccupancyData():
-        return self._bufferSize
+        return self._buffer_sizes
