@@ -228,16 +228,34 @@ class Host(Device):
             if flow is not None:
                 flow.analyze(event)
 
-        # TODO: create timeout event at timeout length later
-
-        # TODO: create send event at tranmission delay later
-        trans_delay = float(packet.size()) / float(link.rate())
-
+        # Creates the next packet to send
         next_packet = self._create_packet(self, dest.source())
 
-        create_event = self._create_event(time + trans_delay, self._port, Event._CREATE, next_packet)
+        # Creates a timeout event for a timeout length later
+        timeout_event = self._create_event(time + link.timeout(), self._port, Event._TIMEOUT, next_packet)
+        events.append(timeout_event)
 
+        # Creates a create event for a tranmission delay later
+        trans_delay = float(packet.size()) / float(link.rate())
+        create_event = self._create_event(time + trans_delay, self._port, Event._CREATE, next_packet)
         events.append(create_event)
+
+        return events
+
+    def _handle_timeout(self, event):
+        """
+        Handles timeout events.
+        """
+
+        events = []
+
+        packet = event.packet()
+
+        # Updates packet statistics of flow
+        flow = self._flows.get(packet.dest())
+
+        if flow is not None:
+            flow.analyze(event)
 
         return events
 
@@ -257,7 +275,7 @@ class Host(Device):
             events.extend(self._handle_create(event))
 
         elif action == Event._RECEIVE:
-            # Processes all received packets
+            # Processes an incoming packet
             if port.incoming():
                 # Pops the packet off the head of the queue
                 packet = port.incoming().popleft() # append right, pop left
@@ -268,15 +286,19 @@ class Host(Device):
                 events.extend(self._handle_receive(event))
 
         elif action == Event._SEND:
-            # Processes at most one outgoing packet
+            # Processes an outgoing packet
             if port.outgoing():
                 # TODO: ensure window size is greater than number of outstanding packets
 
+                # Pops the packet off the head of the queue
                 packet = port.outgoing().popleft() # append right, pop left
                 event.packet(packet)
 
                 print >> sys.stderr, '[%.3f] Host %s sent packet %s' % (time, self, packet)
 
                 events.extend(self._handle_send(event))
+
+        elif action == Event._TIMEOUT:
+            events.extend(self._handle_timeout(event))
 
         return events
