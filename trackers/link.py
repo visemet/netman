@@ -49,8 +49,9 @@ class LinkTracker:
 
         self._round_trips.append((time, rtt))
 
-    def average_rtt(self, since):
+    def mean_rtt(self, since):
         """
+        Returns the average round trip time since the specified time.
         """
 
         sum_rtt = 0
@@ -67,6 +68,29 @@ class LinkTracker:
             return -1
 
         return (float(sum_rtt) / float(count_rtt))
+
+    def variance_rtt(self, since):
+        """
+        Returns the variance in the round trip time since the specified
+        time.
+        """
+
+        sum_square_deviations = 0
+        count_square_deviations = 0
+
+        mean_rtt = self.mean_rtt(since)
+
+        for (time, rtt) in reversed(self._round_trips):
+            if time < since:
+                break
+
+            sum_square_deviations += (rtt - mean_rtt) ** 2
+            count_square_deviations += 1
+
+        if count_square_deviations == 0:
+            return 0
+
+        return (float(sum_square_deviations) / float(count_square_deviations))
 
     # return points in a form that simulation.generate_graph will accept
     #return list of (time, num) where num is the number of packets lost at

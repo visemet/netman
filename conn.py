@@ -1,3 +1,5 @@
+from math import sqrt
+
 from buffer import Buffer
 from device import Device
 from trackers.link import LinkTracker
@@ -64,17 +66,24 @@ class Link:
 
         self._tracker.record_round_trip(time, rtt)
 
-    def rtt(self):
+    def rtt(self, since=-1):
         """
         Returns the average round trip time of the link.
         """
 
-        average_rtt = self._tracker.average_rtt(-1)
+        mean_rtt = self._tracker.mean_rtt(since)
 
-        if average_rtt == -1:
+        if mean_rtt == -1:
             return 3 * self.delay()
 
-        return average_rtt
+        return mean_rtt
+
+    def timeout(self, since=-1):
+        """
+        Returns the timeout length of the link.
+        """
+
+        return (self.rtt(since) + 4 * sqrt(self._tracker.variance_rtt(since)))
 
     def delay(self, delay=None):
         """
