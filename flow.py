@@ -80,10 +80,19 @@ class Flow:
             self._tracker.record_received(time)
 
             self._algorithm.handle_ack_received()
-            self._unack_packets.remove(packet.seq())
+
+            seq_num = packet.seq()
+            if seq_num in self._unack_packets:
+                self._unack_packets.remove(seq_num)
 
         elif action == Event._TIMEOUT:
-            self._algorithm.handle_timeout()
+            seq_num = packet.seq()
+
+            # Checks that packet was not already acknowledged
+            if seq_num in self._unack_packets:
+                self._unack_packets.remove(seq_num)
+
+                self._algorithm.handle_timeout()
 
         num_unack = len(self._unack_packets)
         if num_unack > 1:
