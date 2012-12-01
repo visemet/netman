@@ -208,15 +208,15 @@ class Host(Device):
 
         # Checks if the room for packet on receiving end
         if not queue.has_space(packet):
-            pass
-
-            # TODO: notify link that packet was dropped
+            # Notifies the link that a packet was dropped
+            link.record_packet_loss(time + prop_delay)
 
         # Otherwise, forwards packet onward
         else:
             queue.append(packet) # append right, pop left
 
-            # TODO: notify link that packet was sent
+            # Notifies the link that a packet was sent
+            link.record_sent(time)
 
             receive_event = self._create_event(time + prop_delay, dest, Event._RECEIVE, packet)
             events.append(receive_event)
