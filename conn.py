@@ -66,6 +66,16 @@ class Link:
 
         self._tracker.record_round_trip(time, rtt)
 
+    def throughput(self, since, until):
+        """
+        Returns the throughput of the link within the given time range.
+        """
+
+        initial = self._tracker.occupancy(since)
+        final = self._tracker.occupancy(until)
+
+        return (float(final - initial) / float(until - since))
+
     def rtt(self, since=-1):
         """
         Returns the average round trip time of the link.
