@@ -22,13 +22,13 @@ class Setup:
     <name, routing algorithm>
 
     # Connections
-    <source, destination, link capacity, prop delay, buffer size>
-
+    <name, source, destination, link capacity, prop delay, buffer size>
+        
     # Flows
-    <source, destination, size, start time, congestion algorithm>
+    <name, source, destination, size, start time, congestion algorithm>
 
     # Measurables
-    <source, destination, type>
+    <name, type>
     """
 
     def __init__(self, filename):
@@ -44,6 +44,10 @@ class Setup:
     def _initialize(self, config):
         curr_type = -1
         devices = {}
+        links = {}
+        flows = {}
+        measure_flows = {}
+        measure_links = {}
 
         for line in config:
             line = line.strip()
@@ -55,7 +59,6 @@ class Setup:
             # Hosts
             if curr_type == 0:
                 [name] = line.split(', ')
-
                 host = Host(name)
                 devices[name] = host
 
@@ -71,7 +74,7 @@ class Setup:
 
             # Connections
             elif curr_type == 2:
-                [source, dest, rate, delay, size] = line.split(', ')
+                [name, source, dest, rate, delay, size] = line.split(', ')
 
                 source_device = devices[source]
                 dest_device = devices[dest]
@@ -97,17 +100,21 @@ class Setup:
                 source_link.dest(source_port)
                 source_link.rate(rate)
                 source_link.delay(delay)
+                source_link.getTracker().set_delay(delay)
 
                 dest_link.dest(dest_port)
                 dest_link.rate(rate)
                 dest_link.delay(delay)
+                dest_link.getTracker().set_delay(delay)
 
                 source_device.enable(source_port)
                 dest_device.enable(dest_port)
+                
+                links[name] = dest_link
 
             # Flows
             elif curr_type == 3:
-                [source, dest, size, time, algorithm] = line.split(', ')
+                [name, source, dest, size, time, algorithm] = line.split(', ')
 
                 source_device = devices[source]
                 dest_device = devices[dest]
@@ -124,18 +131,24 @@ class Setup:
                 congestion.initialize(flow)
 
                 source_device.connect(flow)
+                
+                flows[name] = flow
 
             # Measurables
             elif curr_type == 4:
                 # TODO: track measurables
-                pass
+                [name, type] = line.split(', ')
+                if type == "flow":
+                    measure_flows[name] = flows[name]
+                elif type == "link":
+                    measure_links[name] = links[name]
 
-        return devices.values()
+        return devices.values(), measure_flows, measure_links
 
 if __name__ == '__main__':
     filename = argv[1]
 
-    devices = Setup(filename).devices
+    devices, measure_flows, measure_links = Setup(filename).devices
 
-    sim = Simulation(devices)
+    sim = Simulation(devices, measure_flows, measure_links)
     sim.start()

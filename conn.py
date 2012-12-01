@@ -13,7 +13,6 @@ class Link:
         """
         Creates a Link instance.
         """
-
         self._tracker = LinkTracker()
 
     def __repr__(self):
@@ -24,13 +23,6 @@ class Link:
         return ('Link['
                 'dest=%s'
                 ']') % (self.dest().source())
-
-    def initTracker(self):
-        '''
-        initialize the linkTracker
-        '''
-        self._tracker = LinkTracker()
-        return self
     
     def getTracker(self):
         '''
@@ -42,8 +34,8 @@ class Link:
         """
         Records the time when a packet is sent.
         """
-
         self._tracker.record_sent(time, size)
+        #print str(time) + " " + str(size)
         
     def record_packet_loss(self, time):
         """
@@ -66,6 +58,13 @@ class Link:
 
         self._tracker.record_round_trip(time, rtt)
 
+    def record_link_rate(self, time, rate):
+        '''
+        record the link rate at a certain time
+        '''
+        
+        self._tracker.record_link_rate(time, rate)
+
     def throughput(self, since, until):
         """
         Returns the throughput of the link within the given time range.
@@ -73,7 +72,10 @@ class Link:
 
         occupancy = self._tracker.occupancy(since, until, self.delay())
 
-        return (float(occupancy) / float(until - since))
+        if (until - since) == 0:
+            return 0
+        else:
+            return (float(occupancy) / float(until - since))
 
     def rtt(self, since=-1):
         """
@@ -110,6 +112,7 @@ class Link:
             raise TypeError, 'delay must be a float'
 
         self._delay = delay
+        self._tracker.set_delay(delay)
         return self
 
     def cost(self):

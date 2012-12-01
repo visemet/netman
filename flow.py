@@ -35,7 +35,7 @@ class Flow:
         '''
         return the flowTracker instance
         '''
-        return self.tracker
+        return self._tracker
 
     def is_able(self):
         """
@@ -59,7 +59,38 @@ class Flow:
 
         return self._curr_seq_num
 
-    def analyze(self, event):
+    def throughput(self, since, until, delay):
+        """
+        Returns the throughput of the link within the given time range.
+        """
+
+        occupancy = self.occupancy(since, until, delay)
+
+        if (until - since) == 0:
+            return 0
+        else:
+            return (float(occupancy) / float(until - since))
+            
+    def occupancy(self, since, until, delay):
+        """
+        Returns the number of packets in the link at the specified
+        time.
+        """
+
+        total_size = 0
+
+        for (time, size) in self._tracker.get_times_sent():
+            if since < (time + delay) and until > time:
+                initial = max(time, since)
+                final = min(time + delay, until)
+
+                part = float(final - initial) / float(delay)
+
+                total_size += size * part
+
+        return total_size
+        
+    def analyze(self, event,link):
         """
         """
 
@@ -67,14 +98,24 @@ class Flow:
         time = event.scheduled()
         packet = event.packet()
 
+        #record starting window size
+        windowsize = self.window()
+        self._tracker.record_windowsize(time, windowsize)
+        
         if action == Event._SEND and not packet.has_datum(Packet._ACK):
-            self._tracker.record_sent(time)
+            self._tracker.record_sent(time, packet.size())
 
             num_bits = self.bits()
             if num_bits is not None:
                 self.bits(num_bits - packet.size())
 
             self._unack_packets.append(packet.seq())
+            
+            #calculate and record current flow rate
+            delay = link.delay()
+            rate = self.throughput(
+                self._tracker.get_previous_flowrate_point(), time, delay)
+            self._tracker.record_flowrate(time, rate)
 
         elif action == Event._RECEIVE and packet.has_datum(Packet._ACK):
             self._tracker.record_received(time)
@@ -94,6 +135,10 @@ class Flow:
 
                 self._algorithm.handle_timeout()
 
+        #record ending window size
+        windowsize = self.window()
+        self._tracker.record_windowsize(time, windowsize)
+        
         num_unack = len(self._unack_packets)
         if num_unack > 1:
             # TODO: handle 3 duplicate acknowledgments received

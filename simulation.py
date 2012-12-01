@@ -12,7 +12,7 @@ class Simulation:
     Class for running multi-link, multi-flow network simulations.
     """
 
-    def __init__(self, devices):
+    def __init__(self, devices, measure_flows, measure_links):
         """
         Creates a Simulation instance with the specified list of
         devices.
@@ -33,6 +33,9 @@ class Simulation:
 
         # Initializes an empty event queue
         self._event_queue = []
+        
+        self._measure_flows = measure_flows
+        self._measure_links = measure_links
 
     def _initialize(self):
         """
@@ -52,8 +55,40 @@ class Simulation:
         """
         Finalizes the simulation.
         """
+        # TODO: generate graphs from the statistics
+        
+        #flow-related graphs
+        window_size_graph = Graph("window size", "cwnd (packet)")
+        flow_rate_graph = Graph("flow rate", "send (Mbpms)")
+            #retrieve from flowtracker
+        for flow_name in self._measure_flows.keys():
+            f = self._measure_flows[flow_name].getTracker()
+            #window size graph
+            window_size_graph.add_data_set(flow_name, f.get_window_size_data())
+            #flow rate graph
+            flow_rate_graph.add_data_set(flow_name, f.get_flow_rate_data())
+        
+        #link-related graphs
+        buffer_occupancy_graph = Graph("buffer occupancy", "buffer (packet)")
+        packet_loss_graph = Graph("packet loss", "losses (packets)")
+        link_rate_graph = Graph("link rate", "link rate (Mbpms)")
+        
+        for link_name in self._measure_links.keys():
+            l = self._measure_links[link_name].getTracker()
+            l.set_delay(self._measure_links[link_name].delay())
+            #buffer occupancy graph
+            buffer_occupancy_graph.add_data_set(link_name, l.get_buffer_occupancy_data())
+            #packet loss graph
+            packet_loss_graph.add_data_set(link_name, l.get_packet_loss_data())
+            #link rate graph
+            link_rate_graph.add_data_set(link_name, l.get_link_rate_data())
 
-        pass
+        window_size_graph.generate_total_graph()
+        flow_rate_graph.generate_total_graph()
+        buffer_occupancy_graph.generate_total_graph()
+        packet_loss_graph.generate_total_graph()
+        link_rate_graph.generate_total_graph()
+        
 
     def start(self):
         """
@@ -75,8 +110,6 @@ class Simulation:
             for spawned_event in spawned_events:
                 heappush(self._event_queue, spawned_event)
 
-        # TODO: generate graphs from the statistics
-        
         return self._finalize()
 
 class TestBellmanFord(Simulation):
