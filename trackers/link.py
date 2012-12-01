@@ -20,6 +20,7 @@ class LinkTracker:
 
         self._round_trips = [] # list of tuples (time, rtt)
         
+<<<<<<< HEAD
         self._link_rates = []
 
         self._delay = 0
@@ -27,6 +28,8 @@ class LinkTracker:
     def set_delay(self, delay):
         self._delay = delay
     
+=======
+>>>>>>> ace7cc8a6a9d2df2723ffc40379661772ac3a0c6
     def record_sent(self, time, size):
         """
         Records the time when a packet is sent.
@@ -64,8 +67,8 @@ class LinkTracker:
 
     def occupancy(self, since, until, delay):
         """
-        Returns the number of packets in the link at the specified
-        time.
+        Returns the number of packets in the link between the specified
+        times.
         """
 
         total_size = 0
@@ -80,6 +83,20 @@ class LinkTracker:
                 total_size += size * part
 
         return total_size
+
+    def num_losses(self, since, until):
+        """
+        Returns the number of losses in the link between the specified
+        times.
+        """
+
+        num_losses = 0
+
+        for time in self._packet_losses:
+            if since <= time <= until:
+                num_losses += 1
+
+        return num_losses
 
     def mean_rtt(self, since):
         """

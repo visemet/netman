@@ -30,6 +30,14 @@ class Device:
                 'id=%s'
                 ']') % (self._id)
 
+    def enable(self, port):
+        """
+        Enables the device to use the specified port. Implemented in
+        each subclass.
+        """
+
+        raise NotImplementedError, 'Device.enable(port)'
+
     def initialize(self):
         """
         Initializes the device. Implemented in each subclass.

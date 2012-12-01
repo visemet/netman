@@ -102,6 +102,10 @@ class Host(Device):
         Initializes the host.
         """
 
+        # Checks that destination is reachable
+        if self._port is None:
+            raise ValueError, 'port must be specified'
+
         events = []
 
         # Iterates through each flow
@@ -109,13 +113,8 @@ class Host(Device):
             # Creates a packet to send
             packet = self._create_packet(self, dest)
 
-            # Checks that destination is reachable
-            if self._port is None:
-                continue
-
-            # Creates an event for the starting time of the flow
+            # Creates a create event for the starting time of the flow
             event = self._create_event(flow.start(), self._port, Event._CREATE, packet)
-
             events.append(event)
 
         return events
@@ -133,10 +132,11 @@ class Host(Device):
         dest = packet.dest()
 
         flow = self._flows.get(dest)
+        if flow is not None and flow.is_able() and flow.has_data():
+            # Attaches a unique identifier (per flow) to the packet
+            flow.prepare(packet)
 
-        if flow is not None:
-
-            if flow.is_able() and flow.has_data():
+            self._port.outgoing().append(packet) # append right, pop left
 
                 # Checks that destination is reachable
                 if self._port is not None:
@@ -149,6 +149,9 @@ class Host(Device):
 
                     events.append(send_event)
                     
+            # Creates a send event for now
+            send_event = self._create_event(time, self._port, Event._SEND, packet)
+            events.append(send_event)
 
         return events
 
@@ -183,7 +186,6 @@ class Host(Device):
                     next_packet = self._create_packet(self, dest)
 
                     create_event = self._create_event(time, self._port, Event._CREATE, next_packet)
-
                     events.append(create_event)
 
             # Otherwise, creates an acknowledgment packet
@@ -193,7 +195,6 @@ class Host(Device):
                 self._port.outgoing().append(ack) # append right, pop left
 
                 ack_event = self._create_event(time, self._port, Event._SEND, ack)
-
                 events.append(ack_event)
 
         return events
@@ -225,7 +226,8 @@ class Host(Device):
             queue.append(packet) # append right, pop left
 
             # Notifies the link that a packet was sent
-            
+
+            link.record_sent(time, packet.size())
 
             receive_event = self._create_event(time + prop_delay, dest, Event._RECEIVE, packet)
             events.append(receive_event)
