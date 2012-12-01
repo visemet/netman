@@ -242,7 +242,7 @@ class Router(Device):
         port = event.port()
         link = port.conn()
         buffer = port.incoming()
-        link.record_buffer_size(time, buffer.__len__)
+        link.record_buffer_size(time, buffer.size())
         return events
 
     def _handle_send(self, event):

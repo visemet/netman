@@ -53,14 +53,14 @@ class Graph:
         for x,y in points1:
             # plot x1,x2 y1,y2
             ax.plot([prevpoint[0], x], [prevpoint[1], y], 'r-')
-            prevpoint1 = (x,y)
+            prevpoint = (x,y)
         prevpoint = (0,0)
         for x,y in points2:
             # plot x1,x2 y1,y2
             ax.plot([prevpoint[0], x], [prevpoint[1], y], 'b-')
-            prevpoint1 = (x,y)
+            prevpoint = (x,y)
         # add the legend
-        p1 = Rectangle((0, 0), 1, 1, fc="r")
-        p2 = Rectangle((0, 0), 1, 1, fc="b")
+        p1 = plt.Rectangle((0, 0), 1, 1, fc="r")
+        p2 = plt.Rectangle((0, 0), 1, 1, fc="b")
         p.legend((p1, p2), (label1, label2))
         p.savefig(filename + '.png')
