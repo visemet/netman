@@ -21,7 +21,7 @@ class LinkTracker:
 
         self._round_trips = [] # list of tuples (time, rtt)
         
-    def record_sent(self, time, size):
+    def record_sent(self, time, size, delay):
         """
         Records the time when a packet is sent.
         """
@@ -49,7 +49,7 @@ class LinkTracker:
 
         self._round_trips.append((time, rtt))
 
-    def occupancy(self, at, traverse=0):
+    def occupancy(self, since, until, delay):
         """
         Returns the number of packets in the link at the specified
         time.
@@ -58,8 +58,13 @@ class LinkTracker:
         total_size = 0
 
         for (time, size) in self._times_sent:
-            if not time <= at <= (time + traverse):
-                total_size += size
+            if since < (time + delay) and time > until:
+                initial = max(time, since)
+                final = min(time + delay, until)
+
+                part = float(final - initial) / float(delay)
+
+                total_size += size * part
 
         return total_size
 

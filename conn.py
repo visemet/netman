@@ -43,7 +43,7 @@ class Link:
         Records the time when a packet is sent.
         """
 
-        self._tracker.record_sent((time, size))
+        self._tracker.record_sent(time, size)
         
     def record_packet_loss(self, time):
         """
@@ -71,10 +71,9 @@ class Link:
         Returns the throughput of the link within the given time range.
         """
 
-        initial = self._tracker.occupancy(since)
-        final = self._tracker.occupancy(until)
+        occupancy = self._tracker.occupancy(since, until, self.delay())
 
-        return (float(final - initial) / float(until - since))
+        return (float(occupancy) / float(until - since))
 
     def rtt(self, since=-1):
         """
