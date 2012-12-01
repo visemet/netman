@@ -7,10 +7,10 @@ class LinkTracker:
 
     def __init__(self):
         """
-        Creates a new LinkTracker instance with 
+        Creates a new LinkTracker instance with
             packetLosses initialized to 0
             empty times_sent list
-            
+
         """
         self._times_sent = [] # list of tuples (time, size)
 
@@ -19,14 +19,14 @@ class LinkTracker:
         self._buffer_sizes = [] # list of tuples (time, size)
 
         self._round_trips = [] # list of tuples (time, rtt)
-        
+
         self._link_rates = []
 
         self._delay = 0
 
     def set_delay(self, delay):
         self._delay = delay
-    
+
     def record_sent(self, time, size):
         """
         Records the time when a packet is sent.
@@ -41,14 +41,14 @@ class LinkTracker:
         """
 
         self._packet_losses.append(time)
-        
+
     def record_buffer_size(self, time, size):
         """
         Records the buffer size at a certain time.
         """
 
         self._buffer_sizes.append((time, size))
-        
+
     def record_linkrate(self, time, rate):
         '''
         record the link throughput at a certain time
@@ -135,7 +135,7 @@ class LinkTracker:
             return 0
         else:
             return (float(occupancy) / float(until - since))
-            
+
     # return points in a form that simulation.generate_graph will accept
     #return list of (time, num) where num is the number of packets lost at
     # that moment in time
@@ -160,34 +160,40 @@ class LinkTracker:
             return 0
         else:
             return self._link_rates[len(self._link_rates) -2][0]
-            
+
     def get_link_rate_data(self):
         self._times_sent.sort()
         returnValue = []
         prev = 0
-        i = 1
+        time = 0
+        stepsize = 1
+        maxTime = self._times_sent[len(self._times_sent) - 1][0]
 
-        while i < len(self._times_sent):
-            rate = self.throughput(self._times_sent[prev][0], self._times_sent[i][0])
-            returnValue.append((self._times_sent[i][0], rate))
-            prev += 1
-            i += 1
+        while time < maxTime:
+            rate = self.throughput(prev, time)
+            returnValue.append((time, rate))
+            prev = time
+            time += stepsize
         return returnValue
-        #return [(0,0), (1,0)]
         #return self._link_rates
-        
+
     #return list of (time, num) where num is the occupancy of the buffer at
     # that point in time
     def get_buffer_occupancy_data(self):
-        prev = 0
-        i = 1
-        self._buffer_sizes.sort()
+        for i in self._buffer_sizes:
+          print i
+        #self._buffer_sizes.sort()
+        '''
         returnValue = []
-        while i < len(self._buffer_sizes):
-            occ = self.occupancy(self._buffer_sizes[prev][0], self._buffer_sizes[i][0], self._delay)
-            returnValue.append((self._buffer_sizes[i][0], occ))
-            prev += 1
-            i += 1
-        return returnValue
-
+        prev = 0
+        time = 0
+        stepsize = 1
+        maxTime = self._buffer_sizes[-1][0]
+        while time < maxTime:
+            occ = self.occupancy(prev, time, self._delay)
+            returnValue.append((time, occ))
+            prev = time
+            time += stepsize
+        '''
         return self._buffer_sizes
+
