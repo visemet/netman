@@ -38,12 +38,12 @@ class Link:
         '''
         return self._tracker
 
-    def record_sent(self, time):
+    def record_sent(self, time, size):
         """
         Records the time when a packet is sent.
         """
 
-        self._tracker.record_sent(time)
+        self._tracker.record_sent((time, size))
         
     def record_packet_loss(self, time):
         """

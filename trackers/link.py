@@ -13,7 +13,7 @@ class LinkTracker:
             
         """
 
-        self._times_sent = [] # list of times
+        self._times_sent = [] # list of tuples (time, size)
 
         self._packet_losses = [] # list of times
 
@@ -21,12 +21,12 @@ class LinkTracker:
 
         self._round_trips = [] # list of tuples (time, rtt)
         
-    def record_sent(self, time):
+    def record_sent(self, time, size):
         """
         Records the time when a packet is sent.
         """
 
-        self._times_sent.append(time)
+        self._times_sent.append((time, size))
     
     def record_packet_loss(self, time):
         """
@@ -40,7 +40,7 @@ class LinkTracker:
         Records the buffer size at a certain time.
         """
 
-        self._buffer_sizes.append((time,size))
+        self._buffer_sizes.append((time, size))
 
     def record_round_trip(self, time, rtt):
         """
@@ -48,6 +48,20 @@ class LinkTracker:
         """
 
         self._round_trips.append((time, rtt))
+
+    def occupancy(self, at, traverse=0):
+        """
+        Returns the number of packets in the link at the specified
+        time.
+        """
+
+        total_size = 0
+
+        for (time, size) in self._times_sent:
+            if not time <= at <= (time + traverse):
+                total_size += size
+
+        return total_size
 
     def mean_rtt(self, since):
         """
