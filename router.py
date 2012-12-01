@@ -30,6 +30,12 @@ class Router(Device):
         self._ports = []
         self._flows = {}
 
+    def get_ports(self): 
+        return self._ports
+        
+    def get_flows(self):
+        return self._flows
+    
     def enable(self, port):
         """
         Adds the specified port to the set of ports.
@@ -182,7 +188,7 @@ class Router(Device):
                 flow = self._flows.get(dest)
 
                 if flow is not None:
-                    flow.analyze(event)
+                    flow.analyze(event, None)
                     # print >> sys.stderr, 'Router %s has received %d packets at %s%s' % (self, len(flow._tracker._times_received), flow.dest(), flow._tracker._times_received)
             else:
                 changed = False
@@ -270,19 +276,25 @@ class Router(Device):
             events.append(spawned_event)
         
         else: # no room, record the dropped packet
-            link.record_packet_loss(time)
+            link.record_packet_loss(time+prop_delay)
 
         if packet.source() == self:
             # Updates packet statistics of flow
             flow = self._flows.get(packet.dest())
 
             if flow is not None:
-                flow.analyze(event)
+                flow.analyze(event, link)
                 # print >> sys.stderr, 'Router %s has sent %d packets at %s%s' % (self, len(flow._tracker._times_sent), flow.dest(), flow._tracker._times_sent)
 
+        if event.action() == Event._SEND and not packet.has_datum(Packet._ACK):
+            link.record_sent(time, packet.size())
+            rate = link.throughput(
+                link.getTracker().get_previous_linkrate_point(), time)
+            link.getTracker().record_linkrate(time, rate)
         # update the link tracker with the sent and the current buffer size
-        link.record_sent(time)
+        #link.record_sent(time, packet.size())
         link.record_buffer_size(time, len(queue))
+        #link.record_link_rate(time, link.throughput(0, time))
 
         # TODO: create timeout event at timeout length later
 
@@ -308,7 +320,7 @@ class Router(Device):
         flow = self._flows.get(dest)
 
         if flow is not None:
-            flow.analyze(event)
+            flow.analyze(event, None)
 
         # TODO: necessary to create send event at current time?
 

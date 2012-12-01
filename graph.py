@@ -1,7 +1,51 @@
 import numpy
 import matplotlib.pyplot as plt
+from collections import defaultdict
  
 class Graph:
+
+    def __init__(self, name, ytitle):
+        self._name = name
+        self._ytitle = ytitle
+        self._data_sets = defaultdict(list) #dictionary of data sets. name:datalist
+        
+    def add_data_set(self, name, new_list):
+        self._data_sets[name] = new_list
+        
+    def generate_single_graphs(self):
+        for n in self._data_sets.keys():
+            d = self._data_sets[n]
+            self.generate_graph(d, n, n)
+    
+    def generate_total_graph(self):
+        p = plt.figure()
+        p.suptitle(self._name)
+        ax = p.add_subplot(111)
+        ax.set_xlabel('Time (ms)')
+        ax.set_ylabel(self._ytitle)
+        set_count = 0
+        color_count = 0
+        colors = ["r", "b", "y"]
+        #init to first value
+        legend_colors = ()
+        legend_labels = ()
+        for n in self._data_sets.keys():
+            d = self._data_sets[n]
+            if d == None:
+                continue
+            prevpoint = (0,0)
+            color = colors[color_count] + '-'
+            for x,y in d:
+                # plot x1,x2 y1,y2
+                ax.plot([prevpoint[0], x], [prevpoint[1], y], color)
+                prevpoint = (x,y)
+            # add the legend values
+            legend_colors += (plt.Rectangle((0, 0), 1, 1, fc=colors[color_count]),)
+            legend_labels += (n,)
+            color_count += 1
+        p.legend(legend_colors, legend_labels)
+        p.savefig(self._name + '_all.png')    
+        
     '''
     @param
         points = list[] of (x,y) where x is the x-coordinate and y is the y-coordinate
@@ -14,7 +58,7 @@ class Graph:
     File will be saved as <filename>.png
     
     '''
-    def generate_graph(points, filename, ytitle):
+    def generate_graph(self,points, filename, ytitle):
         p = plt.figure()
         p.suptitle(filename)
         ax = p.add_subplot(111)
@@ -40,7 +84,7 @@ class Graph:
     File will be saved as <filename>.png
     
     '''
-    def generate_twograph(points1, points2, filename, ytitle, label1, label2):
+    def generate_twograph(self, points1, points2, filename, ytitle, label1, label2):
         p = plt.figure()
         p.suptitle(filename)
         ax = p.add_subplot(111)
