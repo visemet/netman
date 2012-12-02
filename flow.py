@@ -103,7 +103,7 @@ class Flow:
         self._tracker.record_windowsize(time, windowsize)
         
         if action == Event._SEND and not packet.has_datum(Packet._ACK):
-            self._tracker.record_sent(time, packet.size())
+            self._tracker.record_sent(time, packet.size(), link.delay())
 
             num_bits = self.bits()
             if num_bits is not None:
@@ -112,10 +112,10 @@ class Flow:
             self._unack_packets.append(packet.seq())
             
             #calculate and record current flow rate
-            delay = link.delay()
-            rate = self.throughput(
-                self._tracker.get_previous_flowrate_point(), time, delay)
-            self._tracker.record_flowrate(time, rate)
+            #delay = link.delay()
+            #rate = self.throughput(
+             #   self._tracker.get_previous_flowrate_point(), time, delay)
+            #self._tracker.record_flowrate(time, rate)
 
         elif action == Event._RECEIVE and packet.has_datum(Packet._ACK):
             self._tracker.record_received(time)
