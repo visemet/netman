@@ -108,6 +108,9 @@ class Router(Device):
 
         # Creates a flow for each neighbor of the router
         for dest in self.neighbors():
+            if not isinstance(dest, Router):
+                continue
+
             congestion = AIMD()
 
             flow = Flow(congestion) # TODO: choose congestion algorithm
@@ -131,9 +134,8 @@ class Router(Device):
                 continue
 
             # Creates an event for the starting time of the flow
-            event = self._create_event(flow.start(), port, Event._CREATE, packet)
-
-            events.append(event)
+            create_event = self._create_event(flow.start(), port, Event._CREATE, packet)
+            events.append(create_event)
 
         return events
 
@@ -163,7 +165,6 @@ class Router(Device):
                 next_port.outgoing().append(packet) # append right, pop left
 
                 routing_event = self._create_event(time, next_port, Event._SEND, packet)
-
                 events.append(routing_event)
 
         return events
