@@ -102,6 +102,10 @@ class Host(Device):
         Initializes the host.
         """
 
+        # Checks that destination is reachable
+        if self._port is None:
+            raise ValueError, 'port must be specified'
+
         events = []
 
         # Iterates through each flow
@@ -109,14 +113,9 @@ class Host(Device):
             # Creates a packet to send
             packet = self._create_packet(self, dest)
 
-            # Checks that destination is reachable
-            if self._port is None:
-                continue
-
-            # Creates an event for the starting time of the flow
-            event = self._create_event(flow.start(), self._port, Event._CREATE, packet)
-
-            events.append(event)
+            # Creates a create event for the starting time of the flow
+            create_event = self._create_event(flow.start(), self._port, Event._CREATE, packet)
+            events.append(create_event)
 
         return events
 
@@ -134,21 +133,14 @@ class Host(Device):
 
         flow = self._flows.get(dest)
 
-        if flow is not None:
+        if flow is not None and flow.is_able() and flow.has_data():
+            # Attaches a unique identifier (per flow) to the packet
+            flow.prepare(packet)
 
-            if flow.is_able() and flow.has_data():
+            self._port.outgoing().append(packet) # append right, pop left
 
-                # Checks that destination is reachable
-                if self._port is not None:
-                    # Attaches a unique identifier (per flow) to the packet
-                    flow.prepare(packet)
-
-                    self._port.outgoing().append(packet) # append right, pop left
-
-                    send_event = self._create_event(time, self._port, Event._SEND, packet)
-
-                    events.append(send_event)
-
+            send_event = self._create_event(time, self._port, Event._SEND, packet)
+            events.append(send_event)
 
         return events
 
