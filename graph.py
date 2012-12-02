@@ -1,22 +1,22 @@
 import numpy
 import matplotlib.pyplot as plt
 from collections import defaultdict
- 
+
 class Graph:
 
     def __init__(self, name, ytitle):
         self._name = name
         self._ytitle = ytitle
         self._data_sets = defaultdict(list) #dictionary of data sets. name:datalist
-        
+
     def add_data_set(self, name, new_list):
         self._data_sets[name] = new_list
-        
+
     def generate_single_graphs(self):
         for n in self._data_sets.keys():
             d = self._data_sets[n]
             self.generate_graph(d, n, n)
-    
+
     def generate_total_graph(self):
         p = plt.figure()
         p.suptitle(self._name)
@@ -44,19 +44,19 @@ class Graph:
             legend_labels += (n,)
             color_count += 1
         p.legend(legend_colors, legend_labels)
-        p.savefig(self._name + '_all.png')    
-        
+        p.savefig('gen_graphs/' + self._name + '_all.png')
+
     '''
     @param
         points = list[] of (x,y) where x is the x-coordinate and y is the y-coordinate
             chose dictionary for purposes of aggregating data at a single point so it's
             easier for the data-collecting function--change?
-        filename: ex. windowSize. 
+        filename: ex. windowSize.
         ytitle - technically we could just use the filename, but this allows us
             to specify units. xtitle is always going to be time
-    
+
     File will be saved as <filename>.png
-    
+
     '''
     def generate_graph(self,points, filename, ytitle):
         p = plt.figure()
@@ -64,7 +64,7 @@ class Graph:
         ax = p.add_subplot(111)
         ax.set_xlabel('Time (s)')
         ax.set_ylabel(ytitle)
-        #graph the line between the previous point and the current point. 
+        #graph the line between the previous point and the current point.
         #Always start the previous point at the origin TODO: is this okay?
         #After every iteration, update the previous point to be the current point
         prevpoint = (0,0)
@@ -73,16 +73,16 @@ class Graph:
             ax.plot([prevpoint[0], x], [prevpoint[1], y], 'r-')
             prevpoint = (x,y)
         p.savefig(filename + '.png')
-        
+
     '''
     @param
         points1, points2 are the two (related) data sets that will be graphed
-        filename: ex. windowSize. 
+        filename: ex. windowSize.
         ytitle - technically we could just use the filename, but this allows us
             to specify units. xtitle is always going to be time
         label1, label2 are the labels in the legend
     File will be saved as <filename>.png
-    
+
     '''
     def generate_twograph(self, points1, points2, filename, ytitle, label1, label2):
         p = plt.figure()
@@ -90,7 +90,7 @@ class Graph:
         ax = p.add_subplot(111)
         ax.set_xlabel('Time (s)')
         ax.set_ylabel(ytitle)
-        #graph the line between the previous point and the current point. 
+        #graph the line between the previous point and the current point.
         #Always start the previous point at the origin TODO: is this okay?
         #After every iteration, update the previous point to be the current point
         prevpoint = (0,0)

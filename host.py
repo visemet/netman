@@ -24,12 +24,12 @@ class Host(Device):
 
     def get_flows(self):
         return self._flows
-        
+
     #caution: should not be called until after host has been completely set up
     # (i.e. only used in simulation.finalize()
     def get_ports(self):
         return self._port
-    
+
     def enable(self, port):
         """
         Replaces the port with the specified value.
@@ -40,7 +40,7 @@ class Host(Device):
             raise TypeError, 'port must be a Port instance'
 
         self._port = port
-    
+
     def connect(self, flow):
         """
         Adds the specified flow to the set of flows.
@@ -102,10 +102,6 @@ class Host(Device):
         Initializes the host.
         """
 
-        # Checks that destination is reachable
-        if self._port is None:
-            raise ValueError, 'port must be specified'
-
         events = []
 
         # Iterates through each flow
@@ -113,8 +109,13 @@ class Host(Device):
             # Creates a packet to send
             packet = self._create_packet(self, dest)
 
-            # Creates a create event for the starting time of the flow
+            # Checks that destination is reachable
+            if self._port is None:
+                continue
+
+            # Creates an event for the starting time of the flow
             event = self._create_event(flow.start(), self._port, Event._CREATE, packet)
+
             events.append(event)
 
         return events
@@ -132,11 +133,10 @@ class Host(Device):
         dest = packet.dest()
 
         flow = self._flows.get(dest)
-        if flow is not None and flow.is_able() and flow.has_data():
-            # Attaches a unique identifier (per flow) to the packet
-            flow.prepare(packet)
 
-            self._port.outgoing().append(packet) # append right, pop left
+        if flow is not None:
+
+            if flow.is_able() and flow.has_data():
 
                 # Checks that destination is reachable
                 if self._port is not None:
@@ -148,10 +148,7 @@ class Host(Device):
                     send_event = self._create_event(time, self._port, Event._SEND, packet)
 
                     events.append(send_event)
-                    
-            # Creates a send event for now
-            send_event = self._create_event(time, self._port, Event._SEND, packet)
-            events.append(send_event)
+
 
         return events
 
@@ -186,7 +183,9 @@ class Host(Device):
                     next_packet = self._create_packet(self, dest)
 
                     create_event = self._create_event(time, self._port, Event._CREATE, next_packet)
+
                     events.append(create_event)
+                    print >> sys.stderr, "should create" + str( time)
 
             # Otherwise, creates an acknowledgment packet
             else:
@@ -195,6 +194,7 @@ class Host(Device):
                 self._port.outgoing().append(ack) # append right, pop left
 
                 ack_event = self._create_event(time, self._port, Event._SEND, ack)
+
                 events.append(ack_event)
 
         return events
@@ -227,23 +227,24 @@ class Host(Device):
 
             # Notifies the link that a packet was sent
 
-            link.record_sent(time, packet.size())
 
             receive_event = self._create_event(time + prop_delay, dest, Event._RECEIVE, packet)
             events.append(receive_event)
 
+        should_create = True
         if packet.source() == self:
             # Updates packet statistics of flow
             flow = self._flows.get(packet.dest())
 
             if flow is not None:
                 flow.analyze(event, link)
-                
+                should_create = flow.is_able()
+
         if event.action() == Event._SEND and not packet.has_datum(Packet._ACK):
             link.record_sent(time, packet.size())
-            rate = link.throughput(
-                link.getTracker().get_previous_linkrate_point(), time)
-            link.getTracker().record_linkrate(time, rate)
+            #rate = link.throughput(
+            #    link.getTracker().get_previous_linkrate_point(), time)
+            #link.getTracker().record_linkrate(time, rate)
 
 
         # Creates the next packet to send
@@ -255,11 +256,12 @@ class Host(Device):
 
         # Creates a create event for a tranmission delay later
         trans_delay = float(packet.size()) / float(link.rate())
-        create_event = self._create_event(time + trans_delay, self._port, Event._CREATE, next_packet)
-        events.append(create_event)
-        
-        link.record_buffer_size(time, len(queue))
-        
+
+        if should_create:
+            create_event = self._create_event(time + trans_delay, self._port, Event._CREATE, next_packet)
+            events.append(create_event)
+
+
 
         return events
 
@@ -285,17 +287,20 @@ class Host(Device):
         """
         Processes the specified event.
         """
-        
+
         events = []
 
         time = event.scheduled()
         port = event.port()
         action = event.action()
+        link = port.conn()
+
 
         if action == Event._CREATE:
             events.extend(self._handle_create(event))
 
         elif action == Event._RECEIVE:
+            link.dest().conn().record_buffer_size(time, len(port.incoming()))
             # Processes an incoming packet
             if port.incoming():
                 # Pops the packet off the head of the queue
@@ -305,10 +310,13 @@ class Host(Device):
                 print >> sys.stderr, '[%.3f] Host %s received packet %s' % (time, self, packet)
 
                 events.extend(self._handle_receive(event))
+            link.dest().conn().record_buffer_size(time, len(port.incoming()))
 
         elif action == Event._SEND:
+            link.record_buffer_size(time, len(port.conn().dest().incoming()))
             # Processes an outgoing packet
             if port.outgoing():
+
                 # TODO: ensure window size is greater than number of outstanding packets
 
                 # Pops the packet off the head of the queue
@@ -318,7 +326,8 @@ class Host(Device):
                 print >> sys.stderr, '[%.3f] Host %s sent packet %s' % (time, self, packet)
 
                 events.extend(self._handle_send(event))
-                
+            link.record_buffer_size(time, len(port.conn().dest().incoming()))
+
         elif action == Event._TIMEOUT:
             events.extend(self._handle_timeout(event))
 

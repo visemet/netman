@@ -77,15 +77,6 @@ class Link:
         else:
             return (float(occupancy) / float(until - since))
 
-    def loss_rate(self, since, until):
-        """
-        Returns the loss rate of the link within the given time range.
-        """
-
-        num_losses = self._tracker.num_losses(since, until)
-
-        return (float(num_losses) / float(until - since))
-
     def rtt(self, since=-1):
         """
         Returns the average round trip time of the link.
