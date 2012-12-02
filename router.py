@@ -113,7 +113,7 @@ class Router(Device):
 
             congestion = AIMD()
 
-            flow = Flow(congestion) # TODO: choose congestion algorithm
+            flow = Flow(congestion)
             flow.start(0)
             flow.dest(dest)
 
@@ -151,21 +151,24 @@ class Router(Device):
 
         dest = packet.dest()
 
-        flow = self._flows[dest]
-        if flow.is_able() and flow.has_data(): # always true
-            next_port = self._algorithm.next(dest)
+        next_port = self._algorithm.next(dest)
+        if next_port is None:
+            # TODO: handle by buffering the packet?
+            raise ValueError, 'port must be specified'
 
-            if next_port is not None:
-                # Attaches a unique identifier (per flow) to the packet
-                flow.prepare(packet)
+        flow = self._flows.get(dest)
 
-                # Adds routing and cost information to the packet
-                self._algorithm.prepare(packet)
+        if flow is not None and flow.is_able() and flow.has_data():
+            # Attaches a unique identifier (per flow) to the packet
+            flow.prepare(packet)
 
-                next_port.outgoing().append(packet) # append right, pop left
+            # Adds routing and cost information to the packet
+            self._algorithm.prepare(packet)
 
-                routing_event = self._create_event(time, next_port, Event._SEND, packet)
-                events.append(routing_event)
+            next_port.outgoing().append(packet) # append right, pop left
+
+            routing_event = self._create_event(time, next_port, Event._SEND, packet)
+            events.append(routing_event)
 
         return events
 
@@ -206,7 +209,6 @@ class Router(Device):
                 next_port.outgoing().append(ack) # append right, pop left
 
                 ack_event = self._create_event(time, next_port, Event._SEND, ack)
-
                 events.append(ack_event)
 
                 # Checks that routing or cost information has changed
@@ -228,7 +230,6 @@ class Router(Device):
                                 next_port.outgoing().append(update_packet) # append right, pop left
 
                                 update_event = self._create_event(time, next_port, Event._SEND, update_packet)
-
                                 events.append(update_event)
 
         # Otherwise, forward packet onward
@@ -242,7 +243,6 @@ class Router(Device):
 
                 # Creates a send event at the current time
                 next_event = self._create_event(time, next_port, Event._SEND, packet)
-
                 events.append(next_event)
         
         #record buffer size of incoming buffer
