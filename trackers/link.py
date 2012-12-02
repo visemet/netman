@@ -180,9 +180,6 @@ class LinkTracker:
     #return list of (time, num) where num is the occupancy of the buffer at
     # that point in time
     def get_buffer_occupancy_data(self):
-        for i in self._buffer_sizes:
-          print i
-        #self._buffer_sizes.sort()
         '''
         returnValue = []
         prev = 0

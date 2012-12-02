@@ -27,13 +27,13 @@ class FlowTracker:
     def get_times_sent(self):
         return self._times_sent
 
-    def record_sent(self, time, size):
+    def record_sent(self, time, size, delay):
         """
         Adds an entry in the history to indicate a packet was sent at
         the specified time.
         """
 
-        self._times_sent.append((time, size))
+        self._times_sent.append((time, size, delay))
 
     def record_received(self, time):
         """
@@ -68,31 +68,6 @@ class FlowTracker:
         return len(self._times_received)
     
     
-    '''
-    def sendRate(self):
-        
-        
-        if (self._times_sent[len(self._times_sent)-1] - self._times_sent[0]) == 0:
-            return 0
-        else:
-            return self.numPacketsSent()/  \
-            (self._times_sent[len(self._times_sent)-1] - self._times_sent[0]) #TODO should start time be 0?
-                
-    def receiveRate(self):
-        
-        
-        if (self.packetsReceived[len(self._times_received)-1] - self.packetsReceived[0]) == 0:
-            return 0
-        else:
-            return self.numPacketsReceived()/  \
-            (self.packetsReceived[len(self._times_received)-1] - self.packetsReceived[0]) # TODO should start time be 0?
-    
-    '''
-    
-    '''
-    return second to last flow rate data point.
-    if this is being called for the first time, then return 0,0
-    '''
     def get_previous_flowrate_point(self):
         if len(self._flowrates) < 2:
             return 0
@@ -107,10 +82,10 @@ class FlowTracker:
 
         total_size = 0
 
-        for (time, size) in self._times_sent:
-            if since < time and until > time:
+        for time, size, delay in self._times_sent:
+            if since < (time+delay) and until > time:
                 initial = max(time, since)
-                final = min(time, until)
+                final = min(time+delay, until)
 
                 part = float(final - initial) / float(delay)
 
@@ -123,7 +98,7 @@ class FlowTracker:
         Returns the throughput of the link within the given time range.
         """
 
-        occupancy = self.occupancy(since, until, self._delay)
+        occupancy = self.occupancy(since, until)
 
         if (until - since) == 0:
             return 0
@@ -145,8 +120,19 @@ class FlowTracker:
         self._flowrates.append((time, rate))
         
     def get_flow_rate_data(self):
-        returnValue = self._flowrates
-        returnValue.sort()
+        for i in self._times_sent:
+            print i
+        returnValue = []
+        self._times_sent.sort()
+        prev = 0
+        time = 0
+        stepSize = 1
+        maxTime = self._times_sent[len(self._times_sent)-1][0]
+        while time < maxTime:
+            rate = self.throughput(prev, time)
+            returnValue.append((time, rate))
+            prev = time
+            time += stepSize
         return returnValue
         
     def record_windowsize(self, time, size):
