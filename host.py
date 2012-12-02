@@ -20,6 +20,7 @@ class Host(Device):
 
         Device.__init__(self, identifier)
 
+        self._port = None
         self._flows = {}
 
     def get_flows(self):
@@ -167,17 +168,15 @@ class Host(Device):
 
                 if flow is not None:
                     should_create = not flow.is_able()
-
                     flow.analyze(event, None)
 
-                # Only create a create event if previously unable to send
+                # Only create an event if previously unable to send
                 if should_create:
                     next_packet = self._create_packet(self, dest)
 
+                    # Creates a create event for the current time
                     create_event = self._create_event(time, self._port, Event._CREATE, next_packet)
-
                     events.append(create_event)
-                    print >> sys.stderr, "should create" + str( time)
 
             # Otherwise, creates an acknowledgment packet
             else:
@@ -185,8 +184,8 @@ class Host(Device):
 
                 self._port.outgoing().append(ack) # append right, pop left
 
+                # Creates a send event for the current time
                 ack_event = self._create_event(time, self._port, Event._SEND, ack)
-
                 events.append(ack_event)
 
         return events
@@ -217,13 +216,12 @@ class Host(Device):
         else:
             queue.append(packet) # append right, pop left
 
-            # Notifies the link that a packet was sent
-
-
+            # Creates a receive event for a propagation delay later
             receive_event = self._create_event(time + prop_delay, dest, Event._RECEIVE, packet)
             events.append(receive_event)
 
         should_create = True
+
         if packet.source() == self:
             # Updates packet statistics of flow
             flow = self._flows.get(packet.dest())
@@ -233,11 +231,8 @@ class Host(Device):
                 should_create = flow.is_able()
 
         if event.action() == Event._SEND and not packet.has_datum(Packet._ACK):
+            # Notifies the link that a packet was sent
             link.record_sent(time, packet.size())
-            #rate = link.throughput(
-            #    link.getTracker().get_previous_linkrate_point(), time)
-            #link.getTracker().record_linkrate(time, rate)
-
 
         # Creates the next packet to send
         next_packet = self._create_packet(self, dest.source())
@@ -249,11 +244,11 @@ class Host(Device):
         # Creates a create event for a tranmission delay later
         trans_delay = float(packet.size()) / float(link.rate())
 
+        # Only create an event if currently able to send
         if should_create:
+            # Creates a create event for the current time
             create_event = self._create_event(time + trans_delay, self._port, Event._CREATE, next_packet)
             events.append(create_event)
-
-
 
         return events
 
