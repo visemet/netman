@@ -39,7 +39,7 @@ class Setup:
                              '# Measurables': 4}
 
         config = open(filename, 'r')
-        self.devices = self._initialize(config)
+        (self.devices, self.flows, self.links) = self._initialize(config)
 
     def _initialize(self, config):
         curr_type = -1
@@ -143,12 +143,15 @@ class Setup:
                 elif type == "link":
                     measure_links[name] = links[name]
 
-        return devices.values(), measure_flows, measure_links
+        return (devices.values(), measure_flows, measure_links)
 
 if __name__ == '__main__':
     filename = argv[1]
 
-    devices, measure_flows, measure_links = Setup(filename).devices
+    config = Setup(filename)
+    devices = config.devices
+    measure_flows = config.flows
+    measure_links = config.links
 
     sim = Simulation(devices, measure_flows, measure_links)
     sim.start()

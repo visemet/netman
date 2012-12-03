@@ -6,7 +6,10 @@ from simulation import TestBellmanFord
 def test_routing_less():
     filename = 'configs/routing-less.cfg'
 
-    devices = Setup(filename).devices
+    config = Setup(filename)
+    devices = config.devices
+    measure_flows = config.flows
+    measure_links = config.links
 
     R1 = None
     R2 = None
@@ -23,7 +26,7 @@ def test_routing_less():
         elif device._id == 'R4':
             R4 = device
 
-    sim = TestBellmanFord(devices)
+    sim = TestBellmanFord(devices, measure_flows, measure_links)
     routing_tables = sim.start()
 
     assert routing_tables[R1][R2].conn().dest().source() == R2
