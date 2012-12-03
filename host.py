@@ -261,8 +261,6 @@ class Host(Device):
             create_event = self._create_event(time + trans_delay, self._port, Event._CREATE, next_packet)
             events.append(create_event)
 
-
-
         return events
 
     def _handle_timeout(self, event):

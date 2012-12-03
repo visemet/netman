@@ -288,13 +288,8 @@ class Router(Device):
 
         if event.action() == Event._SEND and not packet.has_datum(Packet._ACK):
             link.record_sent(time, packet.size())
-            rate = link.throughput(
-                link.getTracker().get_previous_linkrate_point(), time)
-            link.getTracker().record_linkrate(time, rate)
-        # update the link tracker with the sent and the current buffer size
-        #link.record_sent(time, packet.size())
         link.record_buffer_size(time, len(queue))
-        #link.record_link_rate(time, link.throughput(0, time))
+
 
         # TODO: create timeout event at timeout length later
 
@@ -342,15 +337,15 @@ class Router(Device):
             events.extend(self._handle_create(event))
 
         elif action == Event._RECEIVE:
+            link.dest().conn().record_buffer_size(time, len(port.incoming()))
             # Processes all received packets
             if port.incoming():
                 # Pops the packet off the head of the queue
                 packet = port.incoming().popleft() # append right, pop left
                 event.packet(packet)
-
                 print >> sys.stderr, '[%.3f] Router %s received packet %s' % (time, self, packet)
-
                 events.extend(self._handle_receive(event))
+            link.dest().conn().record_buffer_size(time, len(port.incoming()))
 
         elif action == Event._SEND:
             # Processes at most one outgoing packet
@@ -363,6 +358,7 @@ class Router(Device):
                 print >> sys.stderr, '[%.3f] Router %s sent packet %s' % (time, self, packet)
 
                 events.extend(self._handle_send(event))
+            link.record_buffer_size(time, len(port.conn().dest().incoming()))
 
         elif action == Event._TIMEOUT:
             events.extend(self._handle_timeout(event))
