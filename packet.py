@@ -20,10 +20,17 @@ class Packet:
         self._source = None
         self._bits_size = None
         self._dest = None
+        self._create_time = None
 
         # Initializes the packet data
         self._data = {}
 
+    def set_create_time(self, time):
+        self._create_time = time
+    
+    def get_create_time(self):
+        return self._create_time
+    
     def __repr__(self):
         """
         Defines the string representation for a Packet instance.

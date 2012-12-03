@@ -60,6 +60,7 @@ class Simulation:
         #flow-related graphs
         window_size_graph = Graph("window size", "cwnd (packet)")
         flow_rate_graph = Graph("flow rate", "send (Mbpms)")
+        rtt_graph = Graph("round trip time", "time (ms)")
             #retrieve from flowtracker
         for flow_name in self._measure_flows.keys():
             f = self._measure_flows[flow_name].getTracker()
@@ -67,6 +68,8 @@ class Simulation:
             window_size_graph.add_data_set(flow_name, f.get_window_size_data())
             #flow rate graph
             flow_rate_graph.add_data_set(flow_name, f.get_flow_rate_data())
+            #rtt graph
+            rtt_graph.add_data_set(flow_name, f.get_rtt_data())
         
         #link-related graphs
         buffer_occupancy_graph = Graph("buffer occupancy", "buffer (packet)")
@@ -88,6 +91,7 @@ class Simulation:
         buffer_occupancy_graph.generate_total_graph()
         packet_loss_graph.generate_total_graph()
         link_rate_graph.generate_total_graph()
+        rtt_graph.generate_total_graph()
         
 
     def start(self):

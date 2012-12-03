@@ -77,6 +77,7 @@ class Host(Device):
 
         ack = self._create_packet(source, dest)
 
+        ack.set_create_time(packet.get_create_time())
         ack.seq(num)
         ack.size(Packet._ACK_SIZE)
         ack.datum(Packet._ACK, True)
@@ -114,6 +115,7 @@ class Host(Device):
             # Creates a packet to send
             packet = self._create_packet(self, dest)
 
+            packet.set_create_time(flow.start())
             # Creates a create event for the starting time of the flow
             create_event = self._create_event(flow.start(), self._port, Event._CREATE, packet)
             events.append(create_event)
@@ -174,6 +176,7 @@ class Host(Device):
                 # Only create an event if previously unable to send
                 if should_create:
                     next_packet = self._create_packet(self, dest)
+                    next_packet.set_create_time(time)
 
                     # Creates a create event for the current time
                     create_event = self._create_event(time, self._port, Event._CREATE, next_packet)
@@ -238,6 +241,7 @@ class Host(Device):
 
         # Creates the next packet to send
         next_packet = self._create_packet(self, packet.dest())
+        next_packet.set_create_time(time)
 
         # Creates a timeout event for a timeout length later
         timeout_event = self._create_event(time + link.timeout(), self._port, Event._TIMEOUT, next_packet)
@@ -275,6 +279,7 @@ class Host(Device):
 
         # Creates the next packet to send
         next_packet = self._create_packet(self, packet.dest())
+        next_packet.set_create_time(time)
 
         # Only create an event if currently able to send
         if should_create:

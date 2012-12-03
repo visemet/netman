@@ -25,26 +25,21 @@ class FlowTracker:
         self._packetsReceived = 0
         
         #RTT
-        self._avg_rtt_sum = 0
-        self._rtts = []
-        self._packet_rtt = {} # dictionary of packet:start_time
-        # the rtt for a packet is computed by time_ack_received - start_time
-
-    #record the starting time for a packet's rtt journey
-    def track_packet_rtt(self, packet, time):
-        self._packet_rtt[packet] = time
-        
+        self._avg_rtt = 0
+        self._rtts = []             # list of (time, rtt)
+        self._current_rtt = 0
+    
     #get the rtt for a packet
-    def get_packet_rtt(self, packet, time):
-        val = time - self._packet_rtt[packet]
-        self._rtts.append(val)
+    def record_packet_rtt(self, packet, time):
+        val = time - packet.get_create_time()
+        self._rtts.append((time, val))
         return val
 
     # return the average rtt
     def get_average_rtt(self):
         count = 0
         sum = 0
-        for i in self._rtts:
+        for time, i in self._rtts:
             sum += i
             count += 1
         return (sum*1.0) / count
@@ -168,4 +163,7 @@ class FlowTracker:
         
     def get_window_size_data(self):
         return self._window_sizes
+        
+    def get_rtt_data(self):
+        return self._rtts
 

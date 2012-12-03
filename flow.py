@@ -125,6 +125,10 @@ class Flow:
                 self._algorithm.handle_ack_received()
 
                 self._unack_packets.remove(seq_num)
+                # if it's receiving an ack packet, record the round trip time 
+                # for that packet
+                self._tracker.record_packet_rtt(packet, time)
+                    
 
         elif action == Event._TIMEOUT:
             seq_num = packet.seq()
