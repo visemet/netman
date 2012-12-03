@@ -30,6 +30,12 @@ class Link:
         '''
         return self._tracker
 
+    def record_packet_entry(self, packet, time):
+        self._tracker.record_packet_entry(packet, time)
+        
+    def get_packet_delay(self, packet, time):
+        return self._tracker.get_packet_delay(packet, time)
+    
     def record_sent(self, time, size):
         """
         Records the time when a packet is sent.

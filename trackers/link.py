@@ -23,9 +23,40 @@ class LinkTracker:
         self._link_rates = []
 
         self._delay = 0
+        
+        # the current queueing delay
+        self._queueing_delay = 0
+        
+        self._packet_delays= [] # stats for all packet delays
+        self._packet_entries = {} # track packet:insert time
 
     def set_delay(self, delay):
         self._delay = delay
+
+    #record that a packet has entered the buffer
+    def record_packet_entry(self, packet, time):
+        self._packet_entries[packet] = time
+        
+    #get the time that a packet entered the buffer
+    def get_packet_entry(self, packet):
+        return self._packet_entries[packet]
+
+    #get the difference between entry and exit time for a packet in the buffer
+    def get_packet_delay(self, packet, time):
+        val = time - self.get_packet_entry(packet)
+        #update the current queueing delay
+        self._queueing_delay = val
+        
+        #add the new statistics
+        self._packet_delays.append(val)
+    
+    def get_average_packet_delay(self, packet, time):
+        sum = 0
+        count = 0
+        for i in self._packet_delays:
+            sum += i
+            count += 1
+        return (sum * 1.0)/count
 
     def record_sent(self, time, size):
         """
