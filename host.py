@@ -219,6 +219,9 @@ class Host(Device):
             # Creates a receive event for a propagation delay later
             receive_event = self._create_event(time + prop_delay, dest, Event._RECEIVE, packet)
             events.append(receive_event)
+            
+            #queueing delay
+            link.record_packet_entry(packet.seq(), time)
 
         should_create = True
 
@@ -233,6 +236,7 @@ class Host(Device):
         if event.action() == Event._SEND and not packet.has_datum(Packet._ACK):
             # Notifies the link that a packet was sent
             link.record_sent(time, packet.size())
+            link.record_packet_entry(packet.seq(), time)
 
         # Creates the next packet to send
         next_packet = self._create_packet(self, packet.dest())

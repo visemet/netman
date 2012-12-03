@@ -23,6 +23,31 @@ class FlowTracker:
 
         self._packetsSent = 0
         self._packetsReceived = 0
+        
+        #RTT
+        self._avg_rtt_sum = 0
+        self._rtts = []
+        self._packet_rtt = {} # dictionary of packet:start_time
+        # the rtt for a packet is computed by time_ack_received - start_time
+
+    #record the starting time for a packet's rtt journey
+    def track_packet_rtt(self, packet, time):
+        self._packet_rtt[packet] = time
+        
+    #get the rtt for a packet
+    def get_packet_rtt(self, packet, time):
+        val = time - self._packet_rtt[packet]
+        self._rtts.append(val)
+        return val
+
+    # return the average rtt
+    def get_average_rtt(self):
+        count = 0
+        sum = 0
+        for i in self._rtts:
+            sum += i
+            count += 1
+        return (sum*1.0) / count
 
     def get_times_sent(self):
         return self._times_sent
