@@ -235,7 +235,7 @@ class Host(Device):
             link.record_sent(time, packet.size())
 
         # Creates the next packet to send
-        next_packet = self._create_packet(self, dest.source())
+        next_packet = self._create_packet(self, packet.dest())
 
         # Creates a timeout event for a timeout length later
         timeout_event = self._create_event(time + link.timeout(), self._port, Event._TIMEOUT, next_packet)
@@ -259,13 +259,26 @@ class Host(Device):
 
         events = []
 
+        time = event.scheduled()
         packet = event.packet()
+
+        should_create = True
 
         # Updates packet statistics of flow
         flow = self._flows.get(packet.dest())
 
         if flow is not None:
             flow.analyze(event, None)
+            should_create = flow.is_able()
+
+        # Creates the next packet to send
+        next_packet = self._create_packet(self, packet.dest())
+
+        # Only create an event if currently able to send
+        if should_create:
+            # Creates a create event for the current time
+            create_event = self._create_event(time, self._port, Event._CREATE, next_packet)
+            events.append(create_event)
 
         return events
 

@@ -118,12 +118,12 @@ class Flow:
             #self._tracker.record_flowrate(time, rate)
 
         elif action == Event._RECEIVE and packet.has_datum(Packet._ACK):
-            self._tracker.record_received(time)
-
-            self._algorithm.handle_ack_received()
-
             seq_num = packet.seq()
             if seq_num in self._unack_packets:
+                self._tracker.record_received(time)
+
+                self._algorithm.handle_ack_received()
+
                 self._unack_packets.remove(seq_num)
 
         elif action == Event._TIMEOUT:
@@ -134,6 +134,9 @@ class Flow:
                 self._unack_packets.remove(seq_num)
 
                 self._algorithm.handle_timeout()
+
+                self._unack_packets = []
+                self._curr_seq_num = seq_num
 
         #record ending window size
         windowsize = self.window()

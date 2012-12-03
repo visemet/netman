@@ -142,6 +142,5 @@ class FlowTracker:
         self._window_sizes.append((time, size))
         
     def get_window_size_data(self):
-        self._window_sizes.sort()
         return self._window_sizes
 
