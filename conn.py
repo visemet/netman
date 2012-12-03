@@ -33,8 +33,8 @@ class Link:
     def record_packet_entry(self, packet, time):
         self._tracker.record_packet_entry(packet, time)
         
-    def get_packet_delay(self, packet, time):
-        return self._tracker.get_packet_delay(packet, time)
+    def update_queueing_delay(self, packet, time):
+        self._tracker.update_queueing_delay(packet, time)
     
     def record_sent(self, time, size):
         """
@@ -126,7 +126,7 @@ class Link:
         Returns the static component of the cost.
         """
 
-        return self.delay() # TODO: + average queuing delay
+        return 0.5 * self.delay() + 0.5 * self._tracker.get_queueing_delay() # TODO: + average queuing delay
 
     def rate(self, rate=None):
         """

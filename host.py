@@ -140,6 +140,7 @@ class Host(Device):
 
             self._port.outgoing().append(packet) # append right, pop left
 
+            self._port.conn().record_packet_entry(packet, time)
             send_event = self._create_event(time, self._port, Event._SEND, packet)
             events.append(send_event)
 
@@ -183,6 +184,7 @@ class Host(Device):
                 ack = self._create_ack(packet)
 
                 self._port.outgoing().append(ack) # append right, pop left
+                self._port.conn().record_packet_entry(ack, time)
 
                 # Creates a send event for the current time
                 ack_event = self._create_event(time, self._port, Event._SEND, ack)
@@ -219,9 +221,6 @@ class Host(Device):
             # Creates a receive event for a propagation delay later
             receive_event = self._create_event(time + prop_delay, dest, Event._RECEIVE, packet)
             events.append(receive_event)
-            
-            #queueing delay
-            link.record_packet_entry(packet.seq(), time)
 
         should_create = True
 
@@ -236,7 +235,6 @@ class Host(Device):
         if event.action() == Event._SEND and not packet.has_datum(Packet._ACK):
             # Notifies the link that a packet was sent
             link.record_sent(time, packet.size())
-            link.record_packet_entry(packet.seq(), time)
 
         # Creates the next packet to send
         next_packet = self._create_packet(self, packet.dest())
@@ -325,6 +323,7 @@ class Host(Device):
 
                 # Pops the packet off the head of the queue
                 packet = port.outgoing().popleft() # append right, pop left
+                port.conn().update_queueing_delay(packet, time)
                 event.packet(packet)
 
                 print >> sys.stderr, '[%.3f] Host %s sent packet %s' % (time, self, packet)

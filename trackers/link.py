@@ -27,7 +27,7 @@ class LinkTracker:
         # the current queueing delay
         self._queueing_delay = 0
         
-        self._packet_delays= [] # stats for all packet delays
+        self._queueing_delays= [] # stats for all packet delays
         self._packet_entries = {} # track packet:insert time
 
     def set_delay(self, delay):
@@ -42,15 +42,18 @@ class LinkTracker:
         return self._packet_entries[packet]
 
     #get the difference between entry and exit time for a packet in the buffer
-    def get_packet_delay(self, packet, time):
+    def update_queueing_delay(self, packet, time):
         val = time - self.get_packet_entry(packet)
         #update the current queueing delay
         self._queueing_delay = val
         
         #add the new statistics
-        self._packet_delays.append(val)
+        self._queueing_delays.append(val)
+        
+    def get_queueing_delay(self):
+        return self._queueing_delay
     
-    def get_average_packet_delay(self, packet, time):
+    def get_average_queueing_delay(self, packet, time):
         sum = 0
         count = 0
         for i in self._packet_delays:

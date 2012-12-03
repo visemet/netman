@@ -167,7 +167,7 @@ class Router(Device):
 
             next_port.outgoing().append(packet) # append right, pop left
             #record when the packet was put into the queue (to calculate queueing delay)
-            next_port.conn().record_packet_entry(packet.seq(), time)
+            next_port.conn().record_packet_entry(packet, time)
 
             routing_event = self._create_event(time, next_port, Event._SEND, packet)
             events.append(routing_event)
@@ -209,6 +209,7 @@ class Router(Device):
                 ack = self._create_ack(packet)
 
                 next_port.outgoing().append(ack) # append right, pop left
+                self._port.conn().record_packet_entry(ack, time)
 
                 ack_event = self._create_event(time, next_port, Event._SEND, ack)
                 events.append(ack_event)
@@ -230,7 +231,8 @@ class Router(Device):
                                 flow.prepare(update_packet)
 
                                 next_port.outgoing().append(update_packet) # append right, pop left
-
+                                self._port.conn().record_packet_entry(update_packet, time)
+                                
                                 update_event = self._create_event(time, next_port, Event._SEND, update_packet)
                                 events.append(update_event)
 
@@ -242,7 +244,7 @@ class Router(Device):
             # Checks that destination is reachable
             if next_port is not None:
                 next_port.outgoing().append(packet) # append right, pop left
-
+                next_port.conn().record_packet_entry(packet, time)
                 # Creates a send event at the current time
                 next_event = self._create_event(time, next_port, Event._SEND, packet)
                 events.append(next_event)
@@ -272,9 +274,6 @@ class Router(Device):
             
             spawned_event = self._create_event(time + prop_delay, dest, Event._RECEIVE, packet)
             events.append(spawned_event)
-            
-            #record when the packet was put into the queue (to calculate queueing delay)
-            link.record_packet_entry(packet, time)
         
         else: # no room, record the dropped packet
             link.record_packet_loss(time+prop_delay)
@@ -289,7 +288,6 @@ class Router(Device):
 
         if event.action() == Event._SEND and not packet.has_datum(Packet._ACK):
             link.record_sent(time, packet.size())
-            link.record_packet_entry(packet, time)
 
         # TODO: create timeout event at timeout length later
 
@@ -349,13 +347,16 @@ class Router(Device):
             link.dest().conn().record_buffer_size(time, len(port.incoming()))
 
         elif action == Event._SEND:
+            link.record_buffer_size(time, len(port.conn().dest().incoming()))
             # Processes at most one outgoing packet
             if port.outgoing():
                 # TODO: ensure window size is greater than number of outstanding packets
 
                 packet = port.outgoing().popleft() # append right, pop left
+                
                 #update the queueing delay when a packet is sent
-                #port.conn().get_packet_delay(packet, time)
+                port.conn().update_queueing_delay(packet, time)
+                
                 event.packet(packet)
 
                 print >> sys.stderr, '[%.3f] Router %s sent packet %s' % (time, self, packet)
