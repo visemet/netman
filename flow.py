@@ -2,6 +2,7 @@ from device import Device
 from event import Event
 from packet import Packet
 from trackers.flow import FlowTracker
+from math import sqrt
 
 class Flow:
     """
@@ -37,6 +38,28 @@ class Flow:
         '''
         return self._tracker
 
+    def record_packet_rtt(self, packet, time):
+        self._tracker.record_packet_rtt(packet, time)
+
+    def rtt(self, delay, since=-1):
+        """
+        Returns the average round trip time of the link.
+        """
+
+        mean_rtt = self._tracker.mean_rtt(since)
+
+        if mean_rtt == -1:
+            return 3 * delay
+
+        return mean_rtt
+        
+    def timeout(self, delay, since=-1):
+        """
+        Returns the timeout length of the link.
+        """
+
+        return (self.rtt(since) + 4 * sqrt(self._tracker.variance_rtt(since)))
+        
     def is_able(self):
         """
         """
@@ -153,7 +176,7 @@ class Flow:
                 pass
 
         self.unack(num_unack)
-
+        
     def prepare(self, packet):
         """
         Prepares the specified packet for sending.

@@ -244,8 +244,11 @@ class Host(Device):
         next_packet.set_create_time(time)
 
         # Creates a timeout event for a timeout length later
-        timeout_event = self._create_event(time + link.timeout(), self._port, Event._TIMEOUT, next_packet)
-        events.append(timeout_event)
+        flow = self._flows.get(next_packet.dest())
+        if flow is not None:
+            # +1 to make sure timeout event is after receive
+            timeout_event = self._create_event(time + flow.timeout(link.delay()) + 1, self._port, Event._TIMEOUT, next_packet)
+            events.append(timeout_event)
 
         # Creates a create event for a tranmission delay later
         trans_delay = float(packet.size()) / float(link.rate())

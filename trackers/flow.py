@@ -35,6 +35,26 @@ class FlowTracker:
         self._rtts.append((time, val))
         return val
 
+    def mean_rtt(self, since):
+        """
+        Returns the average round trip time since the specified time.
+        """
+
+        sum_rtt = 0
+        count_rtt = 0
+
+        for (time, rtt) in reversed(self._rtts):
+            if time < since:
+                break
+
+            sum_rtt += rtt
+            count_rtt += 1
+
+        if count_rtt == 0:
+            return -1
+
+        return (float(sum_rtt) / float(count_rtt))
+    
     # return the average rtt
     def get_average_rtt(self):
         count = 0
@@ -43,6 +63,29 @@ class FlowTracker:
             sum += i
             count += 1
         return (sum*1.0) / count
+        
+    def variance_rtt(self, since):
+        """
+        Returns the variance in the round trip time since the specified
+        time.
+        """
+
+        sum_square_deviations = 0
+        count_square_deviations = 0
+
+        mean_rtt = self.mean_rtt(since)
+
+        for (time, rtt) in reversed(self._rtts):
+            if time < since:
+                break
+
+            sum_square_deviations += (rtt - mean_rtt) ** 2
+            count_square_deviations += 1
+
+        if count_square_deviations == 0:
+            return 0
+
+        return (float(sum_square_deviations) / float(count_square_deviations))   
 
     def get_times_sent(self):
         return self._times_sent
