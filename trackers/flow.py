@@ -183,8 +183,6 @@ class FlowTracker:
         self._flowrates.append((time, rate))
         
     def get_flow_rate_data(self):
-        for i in self._times_sent:
-            print i
         returnValue = []
         self._times_sent.sort()
         prev = 0
