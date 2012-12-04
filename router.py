@@ -78,6 +78,7 @@ class Router(Device):
 
         ack = self._create_packet(source, dest)
 
+        ack.set_create_time(packet.get_create_time())
         ack.seq(num)
         ack.size(Packet._ACK_SIZE)
         ack.datum(Packet._ACK, True)
@@ -126,6 +127,8 @@ class Router(Device):
 
         for (dest, flow) in self._flows.iteritems():
             packet = self._create_packet(self, dest)
+
+            packet.set_create_time(flow.start())
 
             port = self._algorithm.next(dest)
 
@@ -209,7 +212,7 @@ class Router(Device):
                 ack = self._create_ack(packet)
 
                 next_port.outgoing().append(ack) # append right, pop left
-                self._port.conn().record_packet_entry(ack, time)
+                next_port.conn().record_packet_entry(ack, time)
 
                 ack_event = self._create_event(time, next_port, Event._SEND, ack)
                 events.append(ack_event)
