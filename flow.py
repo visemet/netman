@@ -58,7 +58,7 @@ class Flow:
         Returns the timeout length of the link.
         """
 
-        return (self.rtt(since) + 4 * sqrt(self._tracker.variance_rtt(since)))
+        return (self.rtt(delay, since) + 4 * sqrt(self._tracker.variance_rtt(since)))
         
     def is_able(self):
         """
