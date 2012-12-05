@@ -79,7 +79,7 @@ class AIMD(CongestionAlgorithm):
             self.state('SS')
             self._flow.window(float(cwnd)/float(2))
 
-    def Handle3DupAck(self, ndup):
+    def handle_3dupicate_acks(self, ndup=0):
         """
         reset slow start threshold and inflate window
         """
@@ -88,7 +88,7 @@ class AIMD(CongestionAlgorithm):
         if not isinstance(ndup, int):
             raise TypeError, 'ndup must be integer'
         if ndup < 0:
-            raise ValueError, 'ndup must be positivesemidefinite'
+            raise ValueError, 'ndup must be nonnegative'
 
         newssthresh = float(self._flow.window())/float(2)
         self.ssthresh(max(newssthresh, 2))

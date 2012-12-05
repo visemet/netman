@@ -148,9 +148,10 @@ class Flow:
                 self._algorithm.handle_ack_received()
 
                 self._unack_packets.remove(seq_num)
-                # if it's receiving an ack packet, record the round trip time 
-                # for that packet
-                self._tracker.record_packet_rtt(packet, time)
+
+            # if it's receiving an ack packet, record the round trip time 
+            # for that packet
+            self.record_packet_rtt(packet, time)
                     
 
         elif action == Event._TIMEOUT:
@@ -171,9 +172,12 @@ class Flow:
         
         num_unack = len(self._unack_packets)
         if num_unack > 1:
-            # TODO: handle 3 duplicate acknowledgments received
+            # Handles 3 duplicate acknowledgments received
             if (self._unack_packets[1] - self._unack_packets[0]) > 3:
-                pass
+                self._algorithm.handle_3duplicate_acks()
+
+                self._unack_packets = []
+                self._curr_seq_num = seq_num
 
         self.unack(num_unack)
         
