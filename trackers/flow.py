@@ -136,25 +136,6 @@ class FlowTracker:
             return 0
         else:
             return self._flowrates[len(self._flowrates) -2][0]
-        
-    def occupancy(self, since, until):
-        """
-        Returns the number of packets in the link at the specified
-        time.
-        """
-
-        total_size = 0
-
-        for time, size, delay in self._times_sent:
-            if since < (time+delay) and until > time:
-                initial = max(time, since)
-                final = min(time+delay, until)
-
-                part = float(final - initial) / float(delay)
-
-                total_size += size * part
-
-        return total_size
 
     def occupancy(self, since, until, by):
         """
@@ -236,7 +217,7 @@ class FlowTracker:
         result = []
 
         for throughput in self.throughput(since, until, by):
-            result.append((since, throughput))
+            result.append((since + by, throughput))
             since += by
 
         return result
