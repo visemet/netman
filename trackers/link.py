@@ -96,7 +96,7 @@ class LinkTracker:
 
         self._round_trips.append((time, rtt))
 
-    def occupancy(self, since, until, delay):
+    def occupancy(self, since, until, by, delay):
         """
         Returns the number of packets in the link at the specified
         time.
@@ -104,16 +104,40 @@ class LinkTracker:
 
         total_size = 0
 
-        for time, size in self._times_sent:
-            if since < (time + delay) and until > time:
+        index = 0
+        length = len(self._times_sent)
+
+        go_back = -1
+
+        while index < length:
+            (time, size) = self._times_sent[index]
+
+            if until < time:
+                break
+            elif since > (time + delay):
+                index += 1
+            elif go_back == -1 and (since + by) < (time + delay):
+                go_back = index
+
+            if since < (time + delay) and (since + by) > time:
                 initial = max(time, since)
-                final = min(time + delay, until)
-
+                final = min(time + delay, since + by)
+        
                 part = float(final - initial) / float(delay)
-
+        
                 total_size += size * part
 
-        return total_size
+                index += 1
+            else:
+                yield total_size
+
+                index = go_back
+                go_back = -1
+                
+                total_size = 0
+                since += by
+
+        yield total_size
 
     def mean_rtt(self, since):
         """
@@ -158,17 +182,16 @@ class LinkTracker:
 
         return (float(sum_square_deviations) / float(count_square_deviations))
 
-    def throughput(self, since, until):
+    def throughput(self, since, until, by):
         """
         Returns the throughput of the link within the given time range.
         """
 
-        occupancy = self.occupancy(since, until, self._delay)
-
         if (until - since) == 0:
-            return 0
+            yield 0
         else:
-            return (float(occupancy) / float(until - since))
+            for occupancy in self.occupancy(since, until, by, self._delay):
+                yield (float(occupancy) / float(by))
 
     # return points in a form that simulation.generate_graph will accept
     #return list of (time, num) where num is the number of packets lost at
@@ -196,20 +219,21 @@ class LinkTracker:
             return self._link_rates[len(self._link_rates) -2][0]
 
     def get_link_rate_data(self):
-        self._times_sent.sort()
-        returnValue = []
-        prev = 0
-        time = 0
-        stepsize = 1
-        maxTime = self._times_sent[len(self._times_sent) - 1][0]
+        """
+        Returns the link rate data.
+        """
 
-        while time < maxTime:
-            rate = self.throughput(prev, time)
-            returnValue.append((time, rate))
-            prev = time
-            time += stepsize
-        return returnValue
-        #return self._link_rates
+        since = 0
+        until = self._times_sent[-1][0] # (time, size)
+        by = 1
+
+        result = []
+
+        for throughput in self.throughput(since, until, by):
+            result.append((since + by, throughput))
+            since += by
+
+        return result
 
     #return list of (time, num) where num is the occupancy of the buffer at
     # that point in time
