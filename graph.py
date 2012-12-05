@@ -17,7 +17,15 @@ class Graph:
             d = self._data_sets[n]
             self.generate_graph(d, n, n)
 
+    #write datafile
     def generate_total_graph(self):
+        for n in self._data_sets.keys():
+            d = self._data_sets[n]
+            filename = "datafiles/" + self._name.replace(" ", "") + "_" + n + ".dta"
+            outfile = open(filename, 'w')
+            for x,y in d:
+                outfile.write(str(x) + '\t' + str(y) + '\n')
+        '''
         p = plt.figure()
         p.suptitle(self._name)
         ax = p.add_subplot(111)
@@ -45,6 +53,7 @@ class Graph:
             color_count += 1
         p.legend(legend_colors, legend_labels)
         p.savefig('gen_graphs/' + self._name + '_all.png')
+        '''
 
     '''
     @param
