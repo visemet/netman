@@ -2,13 +2,17 @@
 files = dir(fullfile('datafiles', '*.dta'))
 for i = 1:size(files)
     filename = strcat('datafiles/',files(i).name)
-    s = dir(filename)
+    s = dir(filename);
+    color = strcat('.-', 'b');
     if s.bytes ~= 0
-        M = dlmread(filename, '\t')
-        plot(M(:,1), M(:,2), '.-')
-        newname = strrep(filename, 'datafiles', 'graphs')
-        newname = strrep(newname, 'dta', 'png')
-        saveas(gcf, newname)
+        M = dlmread(filename, '\t');
+        plot(M(:,1), M(:,2), '.-');;
+        legend_title = files(i).name
+        legend_title = strrep(legend_title, '.dta', '');
+        legend(legend_title);
+        newname = strrep(filename, 'datafiles', 'graphs');
+        newname = strrep(newname, '.dta', '');
+        saveas(gcf, newname);
     end
     
 end
@@ -27,18 +31,23 @@ for j = 1:size(graph_types)
             p = plot(M(:,1), M(:,2), color);
             %hold off
             if i == 1
-                legend(files(i).name);
+                legend_title = files(i).name
+                legend_title = strrep(legend_title, '.dta', '')
+                legend(legend_title);
             end
             if i > 1
                 [LEGH, OBJH, OUTH, OUTM] = legend;
-                legend([OUTH;p],OUTM{:}, files(i).name);
+                legend_title = files(i).name
+                legend_title = strrep(legend_title, '.dta', '')
+                legend([OUTH;p],OUTM{:},legend_title);
             end
             hold on
         end   
     end
-    newname = strcat(graph_types(j), '_total', 'png');
+    newname = strcat(graph_types(j), '_total');
+    %newname = strcat(graph_types(j), '_total', 'png');
     newname = strcat('total_graphs/', newname)
-    %saveas(gcf, newname)
-    print(gcf, '-r80', '-dpng', newname);
+    saveas(gcf, newname)
+    %print(gcf, '-r80', '-dpng', newname);
     clf
 end
