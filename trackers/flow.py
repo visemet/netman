@@ -155,18 +155,60 @@ class FlowTracker:
                 total_size += size * part
 
         return total_size
+
+    def occupancy(self, since, until, by):
+        """
+        Returns the number of packets in the link at the specified
+        time.
+        """
+
+        total_size = 0
+
+        index = 0
+        length = len(self._times_sent)
+
+        go_back = -1
+
+        while index < length:
+            (time, size, delay) = self._times_sent[index]
+
+            if until < time:
+                break
+            elif since > (time + delay):
+                index += 1
+            elif go_back == -1 and (since + by) < (time + delay):
+                go_back = index
+
+            if since < (time + delay) and (since + by) > time:
+                initial = max(time, since)
+                final = min(time + delay, since + by)
+        
+                part = float(final - initial) / float(delay)
+        
+                total_size += size * part
+
+                index += 1
+            else:
+                yield total_size
+
+                index = go_back
+                go_back = -1
+                
+                total_size = 0
+                since += by
+
+        yield total_size
     
-    def throughput(self, since, until):
+    def throughput(self, since, until, by):
         """
         Returns the throughput of the link within the given time range.
         """
 
-        occupancy = self.occupancy(since, until)
-
         if (until - since) == 0:
-            return 0
+            yield 0
         else:
-            return (float(occupancy) / float(until - since))
+            for occupancy in self.occupancy(since, until, by):
+                yield (float(occupancy) / float(by))
 
     def packetDelay(self):
         '''
@@ -183,18 +225,21 @@ class FlowTracker:
         self._flowrates.append((time, rate))
         
     def get_flow_rate_data(self):
-        returnValue = []
-        self._times_sent.sort()
-        prev = 0
-        time = 0
-        stepSize = 1
-        maxTime = self._times_sent[len(self._times_sent)-1][0]
-        while time < maxTime:
-            rate = self.throughput(prev, time)
-            returnValue.append((time, rate))
-            prev = time
-            time += stepSize
-        return returnValue
+        """
+        Returns the flow rate data.
+        """
+
+        since = 0
+        until = self._times_sent[-1][0] # (time, size, delay)
+        by = 1
+
+        result = []
+
+        for throughput in self.throughput(since, until, by):
+            result.append((since, throughput))
+            since += by
+
+        return result
         
     def record_windowsize(self, time, size):
         '''
