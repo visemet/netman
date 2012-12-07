@@ -1,5 +1,3 @@
-from copy import copy
-
 from algorithm import RoutingAlgorithm
 from device import Device
 from packet import Packet
@@ -12,6 +10,19 @@ class BellmanFord(RoutingAlgorithm):
 
     _COSTS = 'costs'
     _TYPE = 'bellman-ford'
+
+    _EPSILON = 1
+
+    def _find_cost(self, dest):
+        """
+        Computes the cost to reach the specified destination.
+        """
+
+        if dest not in self._routing_table:
+            return -1
+
+        link = self._routing_table[dest].conn()
+        return (link.cost() + self._costs[dest])
 
     # Overrides RoutingAlgorithm.initialize(router)
     def initialize(self, router):
@@ -31,9 +42,8 @@ class BellmanFord(RoutingAlgorithm):
         for port in router._ports: # TODO: change to use proper accessor
             link = port.conn()
             dest = link.dest().source()
-            cost = link.cost()
 
-            self._costs[dest] = cost
+            self._costs[dest] = 0
             self._routing_table[dest] = port
 
     # Overrides RoutingAlgorithm.next(device)
@@ -58,7 +68,12 @@ class BellmanFord(RoutingAlgorithm):
         if not isinstance(packet, Packet):
             raise TypeError, 'packet must be a Packet instance'
 
-        packet.datum(BellmanFord._COSTS, copy(self._costs))
+        costs = {}
+
+        for dest in self._routing_table:
+            costs[dest] = self._find_cost(dest)
+
+        packet.datum(BellmanFord._COSTS, costs)
         packet.datum(BellmanFord._TYPE, True)
 
     # Overrides RoutingAlgorithm.update(packet)
@@ -74,7 +89,7 @@ class BellmanFord(RoutingAlgorithm):
         changed = False
 
         next = packet.source() # from reference point of this instance
-        next_cost = self._costs[next] # TODO: handle when no cost exists
+        next_cost = self._find_cost(next)
 
         costs = packet.datum(BellmanFord._COSTS) # TODO: handle when no data found
 
@@ -83,26 +98,16 @@ class BellmanFord(RoutingAlgorithm):
             if dest == self._router:
                 continue
 
-            overall_cost = cost + next_cost
-            current_cost = self._costs.get(dest, -1)
+            overall_cost = next_cost + cost
+            current_cost = self._find_cost(dest)
 
             # Checks whether new or better route found
-            if current_cost == -1 or overall_cost < current_cost:
+            if current_cost == -1 or overall_cost < (current_cost - BellmanFord._EPSILON):
                 # Updates cost to destination
-                self._costs[dest] = overall_cost
+                self._costs[dest] = self._costs[next] + cost
 
-                # Updates routing table to destination
+                # Updates route to destination
                 self._routing_table[dest] = self._routing_table[next]
-
-                changed = True
-
-            # Checks whether dynamic cost of known route has increased
-            elif (self._routing_table[dest] == self._routing_table[next]
-                  and self._routing_table[dest].conn().dest().source() == next
-                  and overall_cost > current_cost):
-
-                # Updates cost to destination
-                self._costs[dest] = overall_cost
 
                 changed = True
 
