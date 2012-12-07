@@ -56,6 +56,17 @@ class Buffer:
             self._deque.append(packet)
             self._curr_size += packet.size()
 
+    def peekleft(self):
+        """
+        Returns the packet at the head of the buffer.
+        """
+
+        packet = None
+        if self._deque:
+            packet = self._deque[0]
+
+        return packet
+
     def popleft(self):
         """
         Removes and returns the packet at the head of the buffer.
