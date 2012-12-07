@@ -9,6 +9,9 @@ class Link:
     Builder for Link instances.
     """
 
+    _STATIC = 1
+    _DYNAMIC = 1
+
     def __init__(self):
         """
         Creates a Link instance.
@@ -34,7 +37,17 @@ class Link:
         self._tracker.record_packet_entry(packet, time)
         
     def update_queueing_delay(self, packet, time):
+        """
+        Updates the queuing delay of the link.
+        """
+
+        epsilon = 0.1
+
+        before = self._tracker.get_average_queueing_delay()
         self._tracker.update_queueing_delay(packet, time)
+        after = self._tracker.get_average_queueing_delay()
+
+        return (abs(before - after) > epsilon)
     
     def record_sent(self, time, size):
         """
@@ -126,7 +139,10 @@ class Link:
         Returns the static component of the cost.
         """
 
-        return 0.5 * self.delay() + 0.5 * self._tracker.get_queueing_delay() # TODO: + average queuing delay
+        static_cost = Link._STATIC * self.delay()
+        dynamic_cost = Link._DYNAMIC * self._tracker.get_average_queueing_delay()
+
+        return (static_cost + dynamic_cost)
 
     def rate(self, rate=None):
         """
