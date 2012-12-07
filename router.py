@@ -32,6 +32,8 @@ class Router(Device):
 
         self._changed = {}
 
+        self._most_recent = {}
+
     def get_ports(self): 
         return self._ports
         
@@ -145,6 +147,19 @@ class Router(Device):
 
         return events
 
+    def _schedule(self, time, packet, link):
+        """
+        Attempts to schedule the specified packet to send through the
+        specified link at the specified time.
+        """
+
+        next_time = max(self._most_recent.get(link, time), time)
+
+        trans_delay = float(packet.size()) / float(link.rate())
+        self._most_recent[link] = next_time + trans_delay
+
+        return next_time
+
     def _handle_create(self, event):
         """
         Handles create events.
@@ -224,9 +239,13 @@ class Router(Device):
                                     flow.prepare(update_packet)
 
                                     next_port.outgoing().append(update_packet) # append right, pop left
-                                    next_port.conn().record_packet_entry(update_packet, time)
 
-                                    update_event = self._create_event(time, next_port, Event._SEND, update_packet)
+                                    link = next_port.conn()
+
+                                    link.record_packet_entry(update_packet, time)
+                                    send_time = self._schedule(time, packet, link)
+
+                                    update_event = self._create_event(send_time, next_port, Event._SEND, update_packet)
                                     events.append(update_event)
 
             else:
@@ -242,9 +261,13 @@ class Router(Device):
                 ack = self._create_ack(packet)
 
                 next_port.outgoing().append(ack) # append right, pop left
-                next_port.conn().record_packet_entry(ack, time)
 
-                ack_event = self._create_event(time, next_port, Event._SEND, ack)
+                link = next_port.conn()
+
+                link.record_packet_entry(ack, time)
+                send_time = self._schedule(time, ack, link)
+
+                ack_event = self._create_event(send_time, next_port, Event._SEND, ack)
                 events.append(ack_event)
 
                 self._changed[dest] = changed
@@ -282,9 +305,14 @@ class Router(Device):
             # Checks that destination is reachable
             if next_port is not None:
                 next_port.outgoing().append(packet) # append right, pop left
-                next_port.conn().record_packet_entry(packet, time)
+
+                link = next_port.conn()
+
+                link.record_packet_entry(packet, time)
+                send_time = self._schedule(time, packet, link)
+
                 # Creates a send event at the current time
-                next_event = self._create_event(time, next_port, Event._SEND, packet)
+                next_event = self._create_event(send_time, next_port, Event._SEND, packet)
                 events.append(next_event)
         
         return events
@@ -330,7 +358,7 @@ class Router(Device):
         # TODO: create timeout event at timeout length later
 
         # TODO: create send event at tranmission delay later
-        # trans_delay = packet.size() / link.rate()
+        trans_delay = float(packet.size()) / float(link.rate())
 
         return events
 
@@ -375,31 +403,35 @@ class Router(Device):
 
         elif action == Event._RECEIVE:
             link.dest().conn().record_buffer_size(time, len(port.incoming()))
+
             # Processes all received packets
             if port.incoming():
                 # Pops the packet off the head of the queue
                 packet = port.incoming().popleft() # append right, pop left
                 event.packet(packet)
+
                 print >> sys.stderr, '[%.3f] Router %s received packet %s' % (time, self, packet)
+
                 events.extend(self._handle_receive(event))
+
             link.dest().conn().record_buffer_size(time, len(port.incoming()))
 
         elif action == Event._SEND:
             link.record_buffer_size(time, len(port.conn().dest().incoming()))
+
             # Processes at most one outgoing packet
             if port.outgoing():
-                # TODO: ensure window size is greater than number of outstanding packets
-
+                # Pops the packet off the head of the queue
                 packet = port.outgoing().popleft() # append right, pop left
                 
                 #update the queueing delay when a packet is sent
                 port.conn().update_queueing_delay(packet, time)
-                
                 event.packet(packet)
 
                 print >> sys.stderr, '[%.3f] Router %s sent packet %s' % (time, self, packet)
 
                 events.extend(self._handle_send(event))
+
             link.record_buffer_size(time, len(port.conn().dest().incoming()))
 
         elif action == Event._TIMEOUT:
