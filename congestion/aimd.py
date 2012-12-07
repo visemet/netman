@@ -79,7 +79,7 @@ class AIMD(CongestionAlgorithm):
             self.state('SS')
             self._flow.window(float(cwnd)/float(2))
 
-    def handle_3dupicate_acks(self, ndup=0):
+    def handle_3duplicate_acks(self, ndup=0):
         """
         reset slow start threshold and inflate window
         """
