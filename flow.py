@@ -121,6 +121,8 @@ class Flow:
         time = event.scheduled()
         packet = event.packet()
 
+        seq_num = packet.seq()
+
         #record starting window size
         windowsize = self.window()
         self._tracker.record_windowsize(time, windowsize)
@@ -155,8 +157,6 @@ class Flow:
                     
 
         elif action == Event._TIMEOUT:
-            seq_num = packet.seq()
-
             # Checks that packet was not already acknowledged
             if seq_num in self._unack_packets:
                 self._unack_packets.remove(seq_num)
