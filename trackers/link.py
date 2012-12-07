@@ -53,13 +53,13 @@ class LinkTracker:
     def get_queueing_delay(self):
         return self._queueing_delay
     
-    def get_average_queueing_delay(self, packet, time):
-        sum = 0
-        count = 0
-        for i in self._packet_delays:
-            sum += i
-            count += 1
-        return (sum * 1.0)/count
+    def get_average_queueing_delay(self):
+        count = len(self._queueing_delays)
+
+        if count == 0:
+            return 0
+
+        return (float(sum(self._queueing_delays)) / float(count))
 
     def record_sent(self, time, size):
         """
