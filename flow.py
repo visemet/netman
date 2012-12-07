@@ -130,10 +130,6 @@ class Flow:
         if action == Event._SEND and not packet.has_datum(Packet._ACK):
             self._tracker.record_sent(time, packet.size(), link.delay())
 
-            num_bits = self.bits()
-            if num_bits is not None:
-                self.bits(num_bits - packet.size())
-
             self._unack_packets.append(packet.seq())
             
             #calculate and record current flow rate
@@ -154,7 +150,6 @@ class Flow:
             # if it's receiving an ack packet, record the round trip time 
             # for that packet
             self.record_packet_rtt(packet, time)
-                    
 
         elif action == Event._TIMEOUT:
             # Checks that packet was not already acknowledged
@@ -190,6 +185,10 @@ class Flow:
         # TODO: verify destination of packet
 
         packet.seq(self.next_seq())
+
+        num_bits = self.bits()
+        if num_bits is not None:
+            self.bits(num_bits - packet.size())
 
     def window(self, size=None):
         """
