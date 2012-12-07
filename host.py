@@ -194,7 +194,6 @@ class Host(Device):
 
                 # Only create an event if previously unable to send
                 if should_create:
-                    print 'deciding to send after receive'
                     next_packet = self._create_packet(self, dest)
                     next_packet.set_create_time(time)
 
