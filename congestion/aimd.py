@@ -81,15 +81,16 @@ class AIMD(CongestionAlgorithm):
         elif num < 0:
             raise ValueError, 'num must be nonnegative'
 
-        cwnd = self._flow.window()
+        if self.state() == AIMD._CA:
+            cwnd = self._flow.window()
 
-        # Sets the window size as half the current window size 
-        cwnd = max(float(cwnd) / 2.0, 1)
+            # Sets the window size as half the current window size 
+            cwnd = max(float(cwnd) / 2.0, 1)
 
-        # Sets the slow start threshold as half the current window size
-        self.ssthresh(cwnd)
+            # Sets the slow start threshold as half the current window size
+            self.ssthresh(cwnd)
 
-        self._flow.window(cwnd + num)
+            self._flow.window(cwnd + num)
 
     def ssthresh(self, ssthresh=None):
         """
