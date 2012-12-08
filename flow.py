@@ -1,13 +1,18 @@
+from math import sqrt
+
 from device import Device
 from event import Event
 from packet import Packet
 from trackers.flow import FlowTracker
-from math import sqrt
 
 class Flow:
     """
     Builder for Flow instances.
     """
+
+    _NUM_DUPLICATES = 3
+
+    _MARGIN = 1000
 
     def __init__(self, algorithm, window_size=1):
         """
@@ -29,6 +34,11 @@ class Flow:
 
         self._curr_seq_num = 0
         self._unack_packets = []
+
+        self._ack_counts = {}
+
+        self._last_timeout = -Flow._MARGIN
+        self._last_duplicate = -Flow._MARGIN
 
         self._tracker = FlowTracker()
 
@@ -113,39 +123,54 @@ class Flow:
 
         return total_size
         
-    def analyze(self, event,link):
+    def analyze(self, event, link):
         """
+        Analyzes the specified event from the specified link.
         """
 
         action = event.action()
         time = event.scheduled()
         packet = event.packet()
 
+        reset = False
+
         seq_num = packet.seq()
 
         #record starting window size
         windowsize = self.window()
         self._tracker.record_windowsize(time, windowsize)
-        
+
         if action == Event._SEND and not packet.has_datum(Packet._ACK):
             self._tracker.record_sent(time, packet.size(), link.delay())
 
             self._unack_packets.append(packet.seq())
-            
-            #calculate and record current flow rate
-            #delay = link.delay()
-            #rate = self.throughput(
-             #   self._tracker.get_previous_flowrate_point(), time, delay)
-            #self._tracker.record_flowrate(time, rate)
 
         elif action == Event._RECEIVE and packet.has_datum(Packet._ACK):
             seq_num = packet.seq()
+
             if seq_num in self._unack_packets:
                 self._tracker.record_received(time)
 
                 self._algorithm.handle_ack_received()
 
                 self._unack_packets.remove(seq_num)
+            else:
+                num_acks = self._ack_counts.get(seq_num, 0) + 1
+                self._ack_counts[seq_num] = num_acks
+
+                if num_acks == Flow._NUM_DUPLICATES:
+                    # Handles 3 duplicate acknowledgments received
+                    if time > (self._last_duplicate + Flow._MARGIN):
+                        print '[ATTN] [%.3f] 3 duplicate acks in %s' % (time, self._algorithm.state())
+
+                        self._algorithm.handle_duplicate_acks(Flow._NUM_DUPLICATES)
+
+                        self._last_duplicate = time
+
+                    self._unack_packets = []
+                    self._curr_seq_num = min(self._curr_seq_num, seq_num)
+
+                    reset = True
 
             # if it's receiving an ack packet, record the round trip time 
             # for that packet
@@ -156,27 +181,28 @@ class Flow:
             if seq_num in self._unack_packets:
                 self._unack_packets.remove(seq_num)
 
-                self._algorithm.handle_timeout()
+                if time > (self._last_timeout + Flow._MARGIN):
+                    print '[ATTN] [%.3f] timeout in %s' % (time, self._algorithm.state())
+
+                    self._algorithm.handle_timeout()
+
+                    self._last_timeout = time
 
                 self._unack_packets = []
-                self._curr_seq_num = seq_num
+                self._curr_seq_num = min(self._curr_seq_num, seq_num)
+
+                self._ack_counts = {}
+
+                reset = True
+
+        num_unack = len(self._unack_packets)
+        self.unack(num_unack)
 
         #record ending window size
         windowsize = self.window()
         self._tracker.record_windowsize(time, windowsize)
-        
-        num_unack = len(self._unack_packets)
-        if num_unack > 1:
-            # Handles 3 duplicate acknowledgments received
-            if (self._unack_packets[1] - self._unack_packets[0]) > 3:
-                self._algorithm.handle_3duplicate_acks()
 
-                self._unack_packets = []
-                self._curr_seq_num = seq_num
-
-        self.unack(num_unack)
-
-        return self._curr_seq_num
+        return reset
         
     def prepare(self, packet):
         """

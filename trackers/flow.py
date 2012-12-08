@@ -82,8 +82,8 @@ class FlowTracker:
             sum_square_deviations += (rtt - mean_rtt) ** 2
             count_square_deviations += 1
 
-        if count_square_deviations == 0:
-            return 0
+        if count_square_deviations <= 1:
+            return 10
 
         return (float(sum_square_deviations) / float(count_square_deviations))   
 
