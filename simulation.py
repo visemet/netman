@@ -118,7 +118,7 @@ class Simulation:
                     done = True
 
                 for flow in flows:
-                    if flow.has_data():
+                    if flow.has_data() or flow.unack():
                         done = False
 
             # Processes the event
