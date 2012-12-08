@@ -4,6 +4,7 @@ from sys import argv
 
 from buffer import Buffer
 from congestion.aimd import AIMD
+from congestion.fast import FAST
 from conn import Link, Port
 from flow import Flow
 from host import Host
@@ -121,14 +122,17 @@ class Setup:
                 size = int(size)
                 time = float(time)
 
-                congestion = AIMD()
+                if algorithm == AIMD._TYPE:
+                    algorithm = AIMD()
+                elif algorithm == FAST._TYPE:
+                    algorithm = FAST()
 
-                flow = Flow(congestion)
+                flow = Flow(algorithm)
                 flow.bits(size)
                 flow.start(time)
                 flow.dest(dest_device)
 
-                congestion.initialize(flow)
+                algorithm.initialize(flow)
 
                 source_device.connect(flow)
                 
