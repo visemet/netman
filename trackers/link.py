@@ -1,4 +1,5 @@
 from device import Device
+from math import floor
 
 class LinkTracker:
     """
@@ -246,17 +247,18 @@ class LinkTracker:
     #return list of (time, num) where num is the occupancy of the buffer at
     # that point in time
     def get_buffer_occupancy_data(self):
-        '''
         returnValue = []
-        prev = 0
-        time = 0
-        stepsize = 1
-        maxTime = self._buffer_sizes[-1][0]
-        while time < maxTime:
-            occ = self.occupancy(prev, time, self._delay)
-            returnValue.append((time, occ))
-            prev = time
-            time += stepsize
-        '''
-        return self._buffer_sizes
+        temp = {}
+        currTime = 0
+        currSize = 0
+        for time,size in self._buffer_sizes:
+            if int(floor(time))==currTime:
+                currSize = max(currSize, size)
+            else:
+                returnValue.append((currTime, currSize))
+                currTime = int(floor(time))
+                currSize = size
+        returnValue.append((currTime, currSize))
+        return returnValue
+        
 
