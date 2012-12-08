@@ -48,18 +48,26 @@ class LinkTracker:
         self._queueing_delay = val
         
         #add the new statistics
-        self._queueing_delays.append(val)
+        self._queueing_delays.append((time, val))
         
     def get_queueing_delay(self):
         return self._queueing_delay
     
-    def get_average_queueing_delay(self):
-        count = len(self._queueing_delays)
+    def get_average_queueing_delay(self, since):
+        total_delay = 0
+        count = 0
+
+        for (time, delay) in reversed(self._queueing_delays):
+            if time < since:
+                break
+
+            total_delay += delay
+            count += 1
 
         if count == 0:
             return 0
 
-        return (float(sum(self._queueing_delays)) / float(count))
+        return (float(total_delay) / float(count))
 
     def record_sent(self, time, size):
         """

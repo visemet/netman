@@ -12,6 +12,8 @@ class Link:
     _STATIC = 1
     _DYNAMIC = 1
 
+    _WINDOW = 18000
+
     def __init__(self):
         """
         Creates a Link instance.
@@ -41,13 +43,7 @@ class Link:
         Updates the queuing delay of the link.
         """
 
-        epsilon = 0.1
-
-        before = self._tracker.get_average_queueing_delay()
         self._tracker.update_queueing_delay(packet, time)
-        after = self._tracker.get_average_queueing_delay()
-
-        return (abs(before - after) > epsilon)
     
     def record_sent(self, time, size):
         """
@@ -134,13 +130,22 @@ class Link:
         self._tracker.set_delay(delay)
         return self
 
-    def cost(self):
+    def mean_queuing_delay(self, since):
+        """
+        Returns the average queuing delay since the specified time.
+        """
+
+        return self._tracker.get_average_queueing_delay(since)
+
+    def cost(self, time):
         """
         Returns the static component of the cost.
         """
 
         static_cost = Link._STATIC * self.delay()
-        dynamic_cost = Link._DYNAMIC * self._tracker.get_average_queueing_delay()
+
+        since = time - Link._WINDOW
+        dynamic_cost = Link._DYNAMIC * self.mean_queuing_delay(since)
 
         return (static_cost + dynamic_cost)
 
