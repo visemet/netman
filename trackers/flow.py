@@ -35,6 +35,22 @@ class FlowTracker:
         self._rtts.append((time, val))
         return val
 
+    def min_rtt(self, since):
+        """
+        Returns the minimum round trip time since the specified time.
+        """
+
+        min_rtt = -1
+
+        for (time, rtt) in reversed(self._rtts):
+            if time < since:
+                break
+
+            if min_rtt == -1 or rtt < min_rtt:
+                min_rtt = rtt
+
+        return min_rtt
+
     def mean_rtt(self, since):
         """
         Returns the average round trip time since the specified time.

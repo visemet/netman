@@ -51,9 +51,21 @@ class Flow:
     def record_packet_rtt(self, packet, time):
         self._tracker.record_packet_rtt(packet, time)
 
+    def min_rtt(self, delay, since=-1):
+        """
+        Returns the minimum round trip time of the flow.
+        """
+
+        min_rtt = self._tracker.min_rtt(since)
+
+        if min_rtt == -1:
+            return 3 * delay
+
+        return min_rtt
+
     def rtt(self, delay, since=-1):
         """
-        Returns the average round trip time of the link.
+        Returns the average round trip time of the flow.
         """
 
         mean_rtt = self._tracker.mean_rtt(since)
@@ -65,7 +77,7 @@ class Flow:
         
     def timeout(self, delay, since=-1):
         """
-        Returns the timeout length of the link.
+        Returns the timeout length of the flow.
         """
 
         return (self.rtt(delay, since) + 4 * sqrt(self._tracker.variance_rtt(since)))
