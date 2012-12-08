@@ -13,7 +13,7 @@ class Router(Device):
     Builder for Router instances.
     """
 
-    _UPDATE_EVERY = 180
+    _UPDATE_EVERY = 18000
 
     def __init__(self, algorithm, identifier):
         """
@@ -36,8 +36,6 @@ class Router(Device):
 
         self._most_recent = {}
         self._next_update = 0
-
-        self._is_done = False
 
     def get_ports(self): 
         return self._ports
@@ -191,7 +189,7 @@ class Router(Device):
             flow.prepare(packet)
 
             # Adds routing and cost information to the packet
-            self._algorithm.prepare(packet)
+            self._algorithm.prepare(time, packet)
 
             next_port.outgoing().append(packet) # append right, pop left
 
@@ -224,9 +222,7 @@ class Router(Device):
                 # Updates packet statistics of flow
                 flow = self._flows.get(dest)
 
-                if flow is not None and not self._is_done:
-                    self._is_done = True
-
+                if flow is not None:
                     flow.analyze(event, None)
                     # print 'after analyze', self, flow.window()
                     # print >> sys.stderr, 'Router %s has received %d packets at %s%s' % (self, len(flow._tracker._times_received), flow.dest(), flow._tracker._times_received)
@@ -255,7 +251,7 @@ class Router(Device):
 
                 # Updates the routing and cost information if necessary
                 if packet.has_datum(self._algorithm._TYPE):
-                    changed = self._algorithm.update(packet)
+                    changed = self._algorithm.update(time, packet)
 
                 next_port = self._algorithm.next(dest)
 
@@ -276,8 +272,6 @@ class Router(Device):
 
         # Otherwise, forward packet onward
         else:
-            self._is_done = False
-
             dest = packet.dest()
             next_port = self._algorithm.next(dest)
 

@@ -2,6 +2,7 @@ from heapq import heappush, heappop
 
 from device import Device
 from event import Event
+from host import Host
 from router import Router
 
 
@@ -101,12 +102,24 @@ class Simulation:
 
         # Initializes the simulation
         self._initialize()
+
+        done = False
         
         # Loops through all events on the queue
-        while self._event_queue:
+        while self._event_queue and not done:
             # Pops the head off of the event queue
             event = heappop(self._event_queue)
             device = event.port().source()
+
+            if isinstance(device, Host):
+                flows = device._flows.values()
+
+                if flows:
+                    done = True
+
+                for flow in flows:
+                    if flow.has_data():
+                        done = False
 
             # Processes the event
             spawned_events = device.process(event)
