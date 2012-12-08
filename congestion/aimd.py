@@ -62,7 +62,7 @@ class AIMD(CongestionAlgorithm):
         self.state(AIMD._SS)
 
         # Sets the slow start threshold as half the current window size
-        ssthresh = float(cwnd) / 2.0
+        ssthresh = max(float(cwnd) / 2.0, 1)
         self.ssthresh(ssthresh)
 
         # Sets the window size to one
@@ -84,7 +84,7 @@ class AIMD(CongestionAlgorithm):
         cwnd = self._flow.window()
 
         # Sets the window size as half the current window size 
-        cwnd = float(cwnd) / 2.0
+        cwnd = max(float(cwnd) / 2.0, 1)
 
         # Sets the slow start threshold as half the current window size
         self.ssthresh(cwnd)
