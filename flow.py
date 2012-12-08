@@ -49,7 +49,7 @@ class Flow:
         mean_rtt = self._tracker.mean_rtt(since)
 
         if mean_rtt == -1:
-            return 3 * delay
+            return 6 * delay
 
         return mean_rtt
         
@@ -167,9 +167,11 @@ class Flow:
         
         num_unack = len(self._unack_packets)
         if num_unack > 1:
+            num_duplicates = 3
+
             # Handles 3 duplicate acknowledgments received
-            if (self._unack_packets[1] - self._unack_packets[0]) > 3:
-                self._algorithm.handle_3duplicate_acks()
+            if (self._unack_packets[1] - self._unack_packets[0]) > num_duplicates:
+                self._algorithm.handle_duplicate_acks(num_duplicates)
 
                 self._unack_packets = []
                 self._curr_seq_num = seq_num

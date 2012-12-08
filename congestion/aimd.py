@@ -10,7 +10,7 @@ class AIMD(CongestionAlgorithm):
     _CA = 'ca'
 
     # Overrides CongestionAlgorithm.initialize(flow)
-    def initialize(self, flow, cwnd=1, awnd=1, ssthresh=0, gamma=0.1, alpha=50):
+    def initialize(self, flow, ssthresh=-1):
         """
         Initializes the congestion algorithm using the specified flow.
         """
@@ -20,164 +20,107 @@ class AIMD(CongestionAlgorithm):
             raise TypeError, 'flow must be a Flow instance'
 
         self._flow = flow
-        
-        # set value of cwnd, awnd and ssthresh
-        self._flow.window(cwnd)
-        self.awnd(awnd)
+
+        self.state(AIMD._SS)
         self.ssthresh(ssthresh)
-        self.Initssthresh(ssthresh)
-        self.state('SS')
 
     # Overrides CongestionAlgorithm.handle_ack_received()
     def handle_ack_received(self):
         """
         Handles a received acknowledgment.
         """
-            # Get current cwnd and check if the state is 
-            # SS or CA
+
         cwnd = self._flow.window()
-        prev_state = self.state()
-            
-        # if (prev_state is 'SS') & (cwnd > self.ssthresh()):
-        #     self.state('CA')
-        #     self._flow.window(1)
-        # elif (cwnd > self.ssthresh()):
-        #     self.state('SS')
-        #     self._flow.window(1)
-        if self.state() is 'SS':
-            self._flow.window(cwnd + 1)
-        elif self.state() is 'CA':
-            self._flow.window(cwnd + float(1)/float(cwnd))
-                
-    # Overrides CongestionAlgorithm.handle_dropped_packet()
-    def handle_packet_dropped(self):
-        """
-        Handles a dropped packet.
-        """
+        state = self.state()
 
-        cwnd = self.cwnd()      
+        ssthresh = self.ssthresh()
 
-        if self.state() is 'CA':                       
-            self._flow.window(float(cwnd)/float(2))
+        # Currently in slow start
+        if state == AIMD._SS:
+            cwnd += 1
+
+            # Handle case where slow start threshold is exceeded
+            if ssthresh != -1 and cwnd > ssthresh:
+                # Go into congestion avoidance
+                self.state(AIMD._CA)
+
+        # Currently in congestion avoidance
+        elif state == AIMD._CA:
+            cwnd += 1.0 / float(cwnd)
+
+        self._flow.window(cwnd)
 
     # Overrides CongestionAlgorithm.handle_timeout()
     def handle_timeout(self):
         """
-        handles time out 
+        Handles a timeout.
         """
-        # Get current cwnd and check if the state is 
-        # SS or CA
+
         cwnd = self._flow.window()
-        prev_state = self.state()
-        
-        # If SS, cwnd = 1 and go to CA
-        # If CA, half cwnd and go to SS
-        if (prev_state is 'SS'):
-            self.state('CA')
-            self._flow.window(1)
-        elif (prev_state is 'CA'):
-            self.state('SS')
-            self._flow.window(float(cwnd)/float(2))
 
-    def handle_3duplicate_acks(self, ndup=0):
+        # Sets the state to slow start
+        self.state(AIMD._SS)
+
+        # Sets the slow start threshold as half the current window size
+        ssthresh = float(cwnd) / 2.0
+        self.ssthresh(ssthresh)
+
+        # Sets the window size to one
+        self._flow.window(1)
+
+    def handle_duplicate_acks(self, num=3):
         """
-        reset slow start threshold and inflate window
+        Handles n-duplicate acknowledgments.
         """
 
-        # check if ndup is positive and integer
-        if not isinstance(ndup, int):
-            raise TypeError, 'ndup must be integer'
-        if ndup < 0:
-            raise ValueError, 'ndup must be nonnegative'
+        # Checks that num is an int
+        if not isinstance(num, int):
+            raise TypeError, 'num must be an int'
 
-        newssthresh = float(self._flow.window())/float(2)
-        self.ssthresh(max(newssthresh, 2))
-        self._flow.window(self.ssthresh() + ndup)
-    
-    def WindowDeflate(self, ssthresh):
-        """
-        Reset window size to threshold after Handle3DupAck.
-        This function is called 1RTT after new packet is transmit
-        """
-        self._flow.window(self.ssthresh())
+        # Checks that num is nonnegative
+        elif num < 0:
+            raise ValueError, 'num must be nonnegative'
 
-        # Reset slow start threshold to the beginning
-        self.ssthresh(self.Initssthresh())
+        cwnd = self._flow.window()
+
+        # Sets the window size as half the current window size 
+        cwnd = float(cwnd) / 2.0
+
+        # Sets the slow start threshold as half the current window size
+        self.ssthresh(cwnd)
+
+        self._flow.window(cwnd + num)
 
     def ssthresh(self, ssthresh=None):
         """
-    ssthresh()                 -> returns the ssthresh
+        ssthresh()         -> returns the slow start threshold
 
-        ssthresh(ssthresh)          ->  sets the ssthresh as the specified
-                                     value and returns this instance
+        ssthresh(ssthresh) ->  sets the slow start threshold as the
+                               specified value
         """
 
         if ssthresh is None:
             return self._ssthresh
 
-        # Checks that ssthresh is positive
+        # Converts ssthresh from an int to float
+        if isinstance(ssthresh, int):
+            ssthresh = float(ssthresh)
+
+        # Checks that ssthresh is a float
+        elif not isinstance(ssthresh, float):
+            raise TypeError, 'ssthresh must be a float'
+
+        # Checks that ssthresh is nonnegative
         elif ssthresh < 0:
             raise ValueError, 'ssthresh must be nonnegative'
 
-        self._ssthresh = ssthresh
-
-    def Initssthresh(self, Initssthresh=None):
-        """
-        Initssthresh()                 -> returns the ssthresh
-
-        Initssthresh(Initssthresh)          ->  sets the ssthresh as the specified
-                                     value and returns this instance
-        """
-
-        if Initssthresh is None:
-            return self._Initssthresh
-
-        # Checks that ssthresh is positive
-        elif Initssthresh < 0:
-            raise ValueError, 'ssthresh must be nonnegative'
-
-        self._Initssthresh = Initssthresh
-            
-    def awnd(self, awnd=None): 
-        """
-        awnd()                     ->  returns awnd
-
-        awnd(awnd)                   ->  sets the awnd as the specified
-                                    value and returns this instance
-        """
-
-        if awnd is None:
-            return self._awnd
-
-        # Checks that awnd is positivesemidefinite
-        if awnd< 0:
-            raise ValueError, 'awnd must be positivesemidefinite'
-            
-        self._awnd = awnd
-        
-    def cwnd(self, cwnd=None): 
-        """
-        cwnd()                     ->  returns cwnd
-
-        cwnd(cwnd)                   ->  sets the cwnd as the specified
-                                    value and returns this instance
-        """
-
-        if cwnd is None:
-            return self._cwnd
-
-        # Checks that cwnd is positivesemidefinite
-        if cwnd<  0:
-            raise ValueError, 'cwnd must be positivesemidefinite'
-
-        self._cwnd = cwnd    
+        self._ssthresh = ssthresh 
 
     def state(self, state=None):
         """
-        state()                     ->  returns state
+        state()      ->  returns the state
 
-        state(state)                   ->  sets the state as the specified
-                                    value and returns this instance
+        state(state) ->  sets the state as the specified value
         """
     
         if state is None:
