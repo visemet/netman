@@ -1,13 +1,18 @@
+from math import sqrt
+
 from device import Device
 from event import Event
 from packet import Packet
 from trackers.flow import FlowTracker
-from math import sqrt
 
 class Flow:
     """
     Builder for Flow instances.
     """
+
+    _NUM_DUPLICATES = 3
+
+    _MARGIN = 100
 
     def __init__(self, algorithm, window_size=1):
         """
@@ -30,6 +35,9 @@ class Flow:
         self._curr_seq_num = 0
         self._unack_packets = []
 
+        self._ack_counts = {}
+        self._last_reset = -Flow._MARGIN
+
         self._tracker = FlowTracker()
 
     def getTracker(self):
@@ -49,7 +57,7 @@ class Flow:
         mean_rtt = self._tracker.mean_rtt(since)
 
         if mean_rtt == -1:
-            return 9 * delay
+            return 3 * delay
 
         return mean_rtt
         
@@ -129,7 +137,7 @@ class Flow:
         #record starting window size
         windowsize = self.window()
         self._tracker.record_windowsize(time, windowsize)
-        
+
         if action == Event._SEND and not packet.has_datum(Packet._ACK):
             self._tracker.record_sent(time, packet.size(), link.delay())
 
@@ -137,12 +145,29 @@ class Flow:
 
         elif action == Event._RECEIVE and packet.has_datum(Packet._ACK):
             seq_num = packet.seq()
+
             if seq_num in self._unack_packets:
                 self._tracker.record_received(time)
 
                 self._algorithm.handle_ack_received()
 
                 self._unack_packets.remove(seq_num)
+            else:
+                num_acks = self._ack_counts.get(seq_num, 0) + 1
+                self._ack_counts[seq_num] = num_acks
+
+                if num_acks == Flow._NUM_DUPLICATES:
+                    print '[ATTN] [%.3f] 3 duplicate acks in %s' % (time, self._algorithm.state())
+
+                    # Handles 3 duplicate acknowledgments received
+                    if time > (self._last_reset + Flow._MARGIN):
+                        self._algorithm.handle_duplicate_acks(Flow._NUM_DUPLICATES)
+
+                    self._unack_packets = []
+                    self._curr_seq_num = min(self._curr_seq_num, seq_num)
+
+                    self._last_reset = time
+                    reset = True
 
             # if it's receiving an ack packet, record the round trip time 
             # for that packet
@@ -151,28 +176,22 @@ class Flow:
         elif action == Event._TIMEOUT:
             # Checks that packet was not already acknowledged
             if seq_num in self._unack_packets:
+                print '[ATTN] [%.3f] timeout in %s' % (time, self._algorithm.state())
+
                 self._unack_packets.remove(seq_num)
 
-                self._algorithm.handle_timeout()
+                if time > (self._last_reset + Flow._MARGIN):
+                    self._algorithm.handle_timeout()
 
                 self._unack_packets = []
-                self._curr_seq_num = seq_num
+                self._curr_seq_num = min(self._curr_seq_num, seq_num)
 
+                self._ack_counts = {}
+
+                self._last_reset = time
                 reset = True
-        
+
         num_unack = len(self._unack_packets)
-        if num_unack > 1:
-            num_duplicates = 3
-
-            # Handles 3 duplicate acknowledgments received
-            if (self._unack_packets[1] - self._unack_packets[0]) > num_duplicates:
-                self._algorithm.handle_duplicate_acks(num_duplicates)
-
-                self._unack_packets = []
-                self._curr_seq_num = seq_num
-
-                reset = True
-
         self.unack(num_unack)
 
         #record ending window size

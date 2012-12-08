@@ -24,6 +24,7 @@ class Host(Device):
         self._flows = {}
 
         self._most_recent = {}
+        self._expected = {}
 
     def get_flows(self):
         return self._flows
@@ -203,14 +204,23 @@ class Host(Device):
 
             # Otherwise, creates an acknowledgment packet
             else:
+                if dest not in self._expected:
+                    self._expected[dest] = packet.seq()
+
+                seq_num = self._expected[dest]
+
                 ack = self._create_ack(packet)
+                ack.seq(seq_num)
+
+                if packet.seq() == seq_num:
+                    self._expected[dest] += 1
 
                 self._port.outgoing().append(ack) # append right, pop left
 
                 link = self._port.conn()
 
                 link.record_packet_entry(ack, time)
-                send_time = self._schedule(time, packet, link)
+                send_time = self._schedule(time, ack, link)
 
                 # Creates a send event for the current time
                 ack_event = self._create_event(send_time, self._port, Event._SEND, ack)
