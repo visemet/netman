@@ -175,6 +175,8 @@ class Flow:
                 self._curr_seq_num = seq_num
 
         self.unack(num_unack)
+
+        return self._curr_seq_num
         
     def prepare(self, packet):
         """
