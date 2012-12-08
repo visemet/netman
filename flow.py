@@ -180,7 +180,7 @@ class Flow:
                         self._last_duplicate = time
 
                     self._unack_packets = []
-                    self._curr_seq_num = min(self._curr_seq_num, seq_num)
+                    self._curr_seq_num = seq_num - 1
 
                     reset = True
 
@@ -201,7 +201,7 @@ class Flow:
                     self._last_timeout = time
 
                 self._unack_packets = []
-                self._curr_seq_num = min(self._curr_seq_num, seq_num)
+                self._curr_seq_num = seq_num - 1
 
                 self._ack_counts = {}
 
