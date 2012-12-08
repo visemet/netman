@@ -13,7 +13,7 @@ class Router(Device):
     Builder for Router instances.
     """
 
-    _UPDATE_EVERY = 18000
+    _UPDATE_EVERY = 4000
 
     def __init__(self, algorithm, identifier):
         """

@@ -12,7 +12,7 @@ class Link:
     _STATIC = 1
     _DYNAMIC = 1
 
-    _WINDOW = 18000
+    _WINDOW = 4000
 
     def __init__(self):
         """

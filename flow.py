@@ -49,7 +49,7 @@ class Flow:
         mean_rtt = self._tracker.mean_rtt(since)
 
         if mean_rtt == -1:
-            return 6 * delay
+            return 9 * delay
 
         return mean_rtt
         
@@ -113,13 +113,16 @@ class Flow:
 
         return total_size
         
-    def analyze(self, event,link):
+    def analyze(self, event, link):
         """
+        Analyzes the specified event from the specified link.
         """
 
         action = event.action()
         time = event.scheduled()
         packet = event.packet()
+
+        reset = False
 
         seq_num = packet.seq()
 
@@ -131,12 +134,6 @@ class Flow:
             self._tracker.record_sent(time, packet.size(), link.delay())
 
             self._unack_packets.append(packet.seq())
-            
-            #calculate and record current flow rate
-            #delay = link.delay()
-            #rate = self.throughput(
-             #   self._tracker.get_previous_flowrate_point(), time, delay)
-            #self._tracker.record_flowrate(time, rate)
 
         elif action == Event._RECEIVE and packet.has_datum(Packet._ACK):
             seq_num = packet.seq()
@@ -161,9 +158,7 @@ class Flow:
                 self._unack_packets = []
                 self._curr_seq_num = seq_num
 
-        #record ending window size
-        windowsize = self.window()
-        self._tracker.record_windowsize(time, windowsize)
+                reset = True
         
         num_unack = len(self._unack_packets)
         if num_unack > 1:
@@ -176,9 +171,15 @@ class Flow:
                 self._unack_packets = []
                 self._curr_seq_num = seq_num
 
+                reset = True
+
         self.unack(num_unack)
 
-        return self._curr_seq_num
+        #record ending window size
+        windowsize = self.window()
+        self._tracker.record_windowsize(time, windowsize)
+
+        return reset
         
     def prepare(self, packet):
         """

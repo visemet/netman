@@ -269,7 +269,7 @@ class Host(Device):
         # Creates a timeout event for a timeout length later
         flow = self._flows.get(next_packet.dest())
         if flow is not None:
-            timeout_event = self._create_event(time + flow.timeout(link.delay()), self._port, Event._TIMEOUT, packet)
+            timeout_event = self._create_event(time + flow.timeout(link.delay()) + 0.001, self._port, Event._TIMEOUT, packet)
             events.append(timeout_event)
 
         # Creates a create event for a tranmission delay later
@@ -299,18 +299,21 @@ class Host(Device):
         flow = self._flows.get(packet.dest())
 
         if flow is not None:
-            seq_num = flow.analyze(event, None)
+            reset = flow.analyze(event, None)
             should_create = flow.is_able()
 
         # Creates the next packet to send
         next_packet = self._create_packet(self, packet.dest())
         next_packet.set_create_time(time)
 
-        # Only create an event if currently able to send
-        if seq_num == packet.seq() and should_create:
-            # Creates a create event for the current time
-            create_event = self._create_event(time, self._port, Event._CREATE, next_packet)
-            events.append(create_event)
+        if reset:
+            print >> sys.stderr, '[%.3f] Host %s timeout packet %s' % (time, self, packet)
+
+            # Only create an event if currently able to send
+            if should_create:
+                # Creates a create event for the current time
+                create_event = self._create_event(time, self._port, Event._CREATE, next_packet)
+                events.append(create_event)
 
         return events
 
