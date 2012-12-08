@@ -37,6 +37,8 @@ class Router(Device):
         self._most_recent = {}
         self._next_update = 0
 
+        self._should_update = False
+
     def get_ports(self): 
         return self._ports
         
@@ -184,7 +186,7 @@ class Router(Device):
 
         flow = self._flows.get(dest)
 
-        if flow is not None and flow.is_able() and flow.has_data():
+        if flow is not None and (flow.is_able() or True) and flow.has_data():
             # Attaches a unique identifier (per flow) to the packet
             flow.prepare(packet)
 
@@ -229,11 +231,13 @@ class Router(Device):
 
                     next_time = time
 
-                    if not self._changed[dest]:
+                    # if not self._changed[dest]:
+                    if not self._should_update:
                         next_time = self._next_update
                         self._next_update += Router._UPDATE_EVERY
 
                     self._changed[dest] = False
+                    self._should_update = False
 
                     # Handles a hello packet
                     for (dest, flow) in self._flows.iteritems():
@@ -269,6 +273,7 @@ class Router(Device):
                 events.append(ack_event)
 
                 self._changed[dest] = changed
+                self._should_update |= changed
 
         # Otherwise, forward packet onward
         else:
