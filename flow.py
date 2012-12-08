@@ -12,7 +12,7 @@ class Flow:
 
     _NUM_DUPLICATES = 3
 
-    _MARGIN = 100
+    _MARGIN = 1000
 
     def __init__(self, algorithm, window_size=1):
         """
@@ -36,7 +36,9 @@ class Flow:
         self._unack_packets = []
 
         self._ack_counts = {}
-        self._last_reset = -Flow._MARGIN
+
+        self._last_timeout = -Flow._MARGIN
+        self._last_duplicate = -Flow._MARGIN
 
         self._tracker = FlowTracker()
 
@@ -157,16 +159,17 @@ class Flow:
                 self._ack_counts[seq_num] = num_acks
 
                 if num_acks == Flow._NUM_DUPLICATES:
-                    print '[ATTN] [%.3f] 3 duplicate acks in %s' % (time, self._algorithm.state())
-
                     # Handles 3 duplicate acknowledgments received
-                    if time > (self._last_reset + Flow._MARGIN):
+                    if time > (self._last_duplicate + Flow._MARGIN):
+                        print '[ATTN] [%.3f] 3 duplicate acks in %s' % (time, self._algorithm.state())
+
                         self._algorithm.handle_duplicate_acks(Flow._NUM_DUPLICATES)
+
+                        self._last_duplicate = time
 
                     self._unack_packets = []
                     self._curr_seq_num = min(self._curr_seq_num, seq_num)
 
-                    self._last_reset = time
                     reset = True
 
             # if it's receiving an ack packet, record the round trip time 
@@ -176,19 +179,20 @@ class Flow:
         elif action == Event._TIMEOUT:
             # Checks that packet was not already acknowledged
             if seq_num in self._unack_packets:
-                print '[ATTN] [%.3f] timeout in %s' % (time, self._algorithm.state())
-
                 self._unack_packets.remove(seq_num)
 
-                if time > (self._last_reset + Flow._MARGIN):
+                if time > (self._last_timeout + Flow._MARGIN):
+                    print '[ATTN] [%.3f] timeout in %s' % (time, self._algorithm.state())
+
                     self._algorithm.handle_timeout()
+
+                    self._last_timeout = time
 
                 self._unack_packets = []
                 self._curr_seq_num = min(self._curr_seq_num, seq_num)
 
                 self._ack_counts = {}
 
-                self._last_reset = time
                 reset = True
 
         num_unack = len(self._unack_packets)
