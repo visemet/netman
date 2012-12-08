@@ -57,7 +57,7 @@ class FAST(CongestionAlgorithm):
             min_rtt = self._flow.min_rtt(10) # TODO: somehow get link delay
             rtt = self._flow.rtt(10) # TODO: somehow get link delay
 
-            cwnd =  min(2 * cwnd, (1 - gamma) * cwnd + gamma * ((float(min_rtt) / float(rtt)) * cwnd + alpha))
+            cwnd =  max(min(2 * cwnd, (1 - gamma) * cwnd + gamma * ((float(min_rtt) / float(rtt)) * cwnd + alpha)), 1)
 
         self._flow.window(cwnd)
 
