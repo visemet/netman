@@ -6,7 +6,7 @@ for i = 1:size(files)
     color = strcat('.-', 'b');
     if s.bytes ~= 0
         M = dlmread(filename, '\t');
-        plot(M(:,1), M(:,2), '.-');;
+        plot(M(:,1), M(:,2), '.');
         legend_title = files(i).name
         legend_title = strrep(legend_title, '.dta', '');
         legend(legend_title);
