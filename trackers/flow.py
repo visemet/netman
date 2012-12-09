@@ -235,7 +235,7 @@ class FlowTracker:
         for throughput in self.throughput(since, until, by):
             result.append((since + by, throughput))
             since += by
-
+        '''
         everySecond = []
         currVal = 0
         currTime = 0
@@ -263,7 +263,7 @@ class FlowTracker:
                 currTime = (time / 500)   
                 currSum = size
         return everySecond
-        
+        '''
         everySecond = []
         currCount = 0
         for time, size in result:
@@ -284,5 +284,6 @@ class FlowTracker:
         
     def get_rtt_data(self):
         return self._rtts
+
         
 

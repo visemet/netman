@@ -298,7 +298,7 @@ class LinkTracker:
                 currTime = int(floor(time))
                 currSize = size
         returnValue.append((currTime, currSize))
-        
+        '''
         everySecond = []
         currVal = 0
         currTime = 0
@@ -327,7 +327,7 @@ class LinkTracker:
                 currTime = (time / 500)   
                 currSum = size
         return everySecond
-             
+        '''     
         everySecond = []
         currCount = 0
         for time, size in returnValue:
