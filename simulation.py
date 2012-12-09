@@ -65,6 +65,8 @@ class Simulation:
             #retrieve from flowtracker
         for flow_name in self._measure_flows.keys():
             f = self._measure_flows[flow_name].getTracker()
+            print "flow name", flow_name
+            f.get_avg_throughput()
             #window size graph
             window_size_graph.add_data_set(flow_name, f.get_window_size_data())
             #flow rate graph
@@ -79,6 +81,8 @@ class Simulation:
         
         for link_name in self._measure_links.keys():
             l = self._measure_links[link_name].getTracker()
+            print "link name", link_name
+            l.get_buffer_stats()
             l.set_delay(self._measure_links[link_name].delay())
             #buffer occupancy graph
             buffer_occupancy_graph.add_data_set(link_name, l.get_buffer_occupancy_data())

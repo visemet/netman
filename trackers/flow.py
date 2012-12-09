@@ -247,7 +247,7 @@ class FlowTracker:
                 currTime = (time / 250)   
                 currVal = size
         return everySecond
-        '''
+        
         everySecond = []
         currVal = 0
         currTime = 0
@@ -263,7 +263,7 @@ class FlowTracker:
                 currTime = (time / 500)   
                 currSum = size
         return everySecond
-        '''
+        
         everySecond = []
         currCount = 0
         for time, size in result:
@@ -272,6 +272,7 @@ class FlowTracker:
             currCount += 1
         return everySecond
         '''
+        return result
       
     def record_windowsize(self, time, size):
         '''
@@ -285,5 +286,14 @@ class FlowTracker:
     def get_rtt_data(self):
         return self._rtts
 
+    def get_avg_throughput(self):
+        result = self.get_flow_rate_data()
+        sum = 0
+        count = 0
+        for time, throughput in result:
+            sum += throughput
+            count += 1
+        print "avg throughput ", (sum*1.0)/count
+        return (sum*1.0)/count
         
 

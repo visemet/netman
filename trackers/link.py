@@ -286,6 +286,7 @@ class LinkTracker:
     #return list of (time, num) where num is the occupancy of the buffer at
     # that point in time
     def get_buffer_occupancy_data(self):
+        '''
         returnValue = []
         temp = {}
         currTime = 0
@@ -298,6 +299,9 @@ class LinkTracker:
                 currTime = int(floor(time))
                 currSize = size
         returnValue.append((currTime, currSize))
+        return returnValue
+        '''
+        return self._buffer_sizes
         '''
         everySecond = []
         currVal = 0
@@ -311,7 +315,7 @@ class LinkTracker:
                 currVal = size
         return everySecond
 
-        '''
+
         everySecond = []
         currVal = 0
         currTime = 0
@@ -326,9 +330,9 @@ class LinkTracker:
                 everySecond.append((currTime, currVal))
                 currTime = (time / 500)   
                 currSum = size
-        return everySecond
-        '''     
+        return everySecond    
         everySecond = []
+        
         currCount = 0
         for time, size in returnValue:
             if (currCount % 100)==0:
@@ -336,4 +340,25 @@ class LinkTracker:
             currCount += 1
         return everySecond
         '''   
+        
+        
+    def get_buffer_stats(self):
+        result = self.get_buffer_occupancy_data()
+        sum = 0
+        count = 0
+        for time, size in result:
+            sum += size
+            count += 1
+        avg = (sum * 1.0)/count
+        print "avg buffer occupancy", avg
+        #calculate variance
+        varsum = 0
+        varcount = 0
+        for time, size in result:
+            varsum += (avg-size)*(avg-size)
+            varcount += 1
+        print "variance of buffer occupancy", (varsum*1.0)/varcount
+        print "avg queueing delay", self.get_average_queueing_delay(0)
+            
+        
 
