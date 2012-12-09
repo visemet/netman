@@ -6,6 +6,8 @@ class AIMD(CongestionAlgorithm):
     Logic for Additive Increase, Multiplicative Decrease algorithm.
     """
 
+    _TYPE = 'reno'
+
     _SS = 'ss'
     _CA = 'ca'
 
@@ -115,7 +117,7 @@ class AIMD(CongestionAlgorithm):
         elif ssthresh < 0:
             raise ValueError, 'ssthresh must be nonnegative'
 
-        self._ssthresh = ssthresh 
+        self._ssthresh = ssthresh
 
     def state(self, state=None):
         """
