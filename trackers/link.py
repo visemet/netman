@@ -250,7 +250,7 @@ class LinkTracker:
             if (time / 250) == currTime:
                 currVal = max(currVal, size)
             else:
-                everySecond.append((currTime, currVal))
+                everySecond.append((currTime*250, currVal))
                 currTime = (time / 250)   
                 currVal = size
             
@@ -306,7 +306,7 @@ class LinkTracker:
             if (time / 250) == currTime:
                 currVal = max(currVal, size)
             else:
-                everySecond.append((currTime, currVal))
+                everySecond.append((currTime*250, currVal))
                 currTime = (time / 250)   
                 currVal = size
         return everySecond
