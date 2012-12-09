@@ -95,13 +95,12 @@ class FAST(CongestionAlgorithm):
         if self.state() == FAST._CA:
             cwnd = self._flow.window()
 
-            # Sets the window size as half the current window size 
-            cwnd = max(float(cwnd) / 2.0, 1)
+            # Sets the window size as alpha
+            self._flow.window(min(cwnd, self._alpha))
 
             # Sets the slow start threshold as half the current window size
-            self.ssthresh(cwnd)
-
-            self._flow.window(cwnd + num)
+            ssthresh = max(float(cwnd) / 2.0, 1)
+            self.ssthresh(ssthresh)
 
     def ssthresh(self, ssthresh=None):
         """

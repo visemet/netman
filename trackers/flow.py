@@ -24,6 +24,8 @@ class FlowTracker:
         self._packetsSent = 0
         self._packetsReceived = 0
         
+        self._round_trips = [] # list of (time, rtt)
+
         #RTT
         self._avg_rtt = 0
         self._rtts = []             # list of (time, rtt)
@@ -59,7 +61,7 @@ class FlowTracker:
         sum_rtt = 0
         count_rtt = 0
 
-        for (time, rtt) in reversed(self._rtts):
+        for (time, rtt) in reversed(self._round_trips):
             if time < since:
                 break
 
@@ -70,15 +72,6 @@ class FlowTracker:
             return -1
 
         return (float(sum_rtt) / float(count_rtt))
-    
-    # return the average rtt
-    def get_average_rtt(self):
-        count = 0
-        sum = 0
-        for time, i in self._rtts:
-            sum += i
-            count += 1
-        return (sum*1.0) / count
         
     def variance_rtt(self, since):
         """
@@ -98,8 +91,8 @@ class FlowTracker:
             sum_square_deviations += (rtt - mean_rtt) ** 2
             count_square_deviations += 1
 
-        if count_square_deviations <= 1:
-            return 10
+        if count_square_deviations == 0:
+            return 0
 
         return (float(sum_square_deviations) / float(count_square_deviations))   
 
@@ -152,6 +145,14 @@ class FlowTracker:
             return 0
         else:
             return self._flowrates[len(self._flowrates) -2][0]
+
+    def record_round_trip(self, time, rtt):
+        """
+        Records the round trip time at a certain time.
+        """
+
+        self._round_trips.append((time, rtt))
+        print 'RTT', self.mean_rtt(-1)
 
     def occupancy(self, since, until, by):
         """

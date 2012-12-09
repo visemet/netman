@@ -12,7 +12,7 @@ class Flow:
 
     _NUM_DUPLICATES = 3
 
-    _MARGIN = 1000
+    _MARGIN = 5000
 
     def __init__(self, algorithm, window_size=1):
         """
@@ -51,6 +51,13 @@ class Flow:
     def record_packet_rtt(self, packet, time):
         self._tracker.record_packet_rtt(packet, time)
 
+    def record_round_trip(self, time, rtt):
+        """
+        Records the round trip time at a certain time.
+        """
+
+        self._tracker.record_round_trip(time, rtt)
+
     def min_rtt(self, delay, since=-1):
         """
         Returns the minimum round trip time of the flow.
@@ -59,7 +66,7 @@ class Flow:
         min_rtt = self._tracker.min_rtt(since)
 
         if min_rtt == -1:
-            return 3 * delay
+            return 2 * delay
 
         return min_rtt
 
@@ -179,18 +186,18 @@ class Flow:
 
                         self._last_duplicate = time
 
+                    # self.bits(self.bits() + len(self._unack_packets) * Packet._DATA_SIZE)
+
                     self._unack_packets = []
                     self._curr_seq_num = seq_num - 1
 
                     reset = True
 
-            # if it's receiving an ack packet, record the round trip time 
-            # for that packet
-            self.record_packet_rtt(packet, time)
-
         elif action == Event._TIMEOUT:
             # Checks that packet was not already acknowledged
             if seq_num in self._unack_packets:
+                # self.bits(self.bits() + len(self._unack_packets) * Packet._DATA_SIZE)
+
                 self._unack_packets.remove(seq_num)
 
                 if time > (self._last_timeout + Flow._MARGIN):

@@ -12,6 +12,8 @@ class Host(Device):
     Builder for Host instances.
     """
 
+    _SENT = 'sent'
+
     def __init__(self, identifier):
         """
         Creates a Host instance with the specified port and the
@@ -119,6 +121,7 @@ class Host(Device):
             packet = self._create_packet(self, dest)
 
             packet.set_create_time(flow.start())
+
             # Creates a create event for the starting time of the flow
             create_event = self._create_event(flow.start(), self._port, Event._CREATE, packet)
             events.append(create_event)
@@ -163,6 +166,8 @@ class Host(Device):
             link.record_packet_entry(packet, time)
             send_time = self._schedule(time, packet, link)
 
+            packet.datum(Host._SENT, time)
+
             send_event = self._create_event(send_time, self._port, Event._SEND, packet)
             events.append(send_event)
 
@@ -193,6 +198,9 @@ class Host(Device):
                     should_create = not flow.is_able()
                     flow.analyze(event, None)
 
+                    rtt = time - packet.datum(Host._SENT)
+                    flow.record_round_trip(time, rtt)
+
                 # Only create an event if previously unable to send
                 if should_create:
                     next_packet = self._create_packet(self, dest)
@@ -211,6 +219,7 @@ class Host(Device):
 
                 ack = self._create_ack(packet)
                 ack.seq(seq_num)
+                ack.datum(Host._SENT, packet.datum(Host._SENT))
 
                 if packet.seq() == seq_num:
                     self._expected[dest] += 1
