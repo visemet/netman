@@ -242,7 +242,46 @@ class LinkTracker:
             result.append((since + by, throughput))
             since += by
 
-        return result
+          
+        everySecond = []
+        currVal = 0
+        currTime = 0
+        for time, size in result:
+            if (time / 250) == currTime:
+                currVal = max(currVal, size)
+            else:
+                everySecond.append((currTime, currVal))
+                currTime = (time / 250)   
+                currVal = size
+            
+        return everySecond
+        
+        '''
+        everySecond = []
+        currVal = 0
+        currTime = 0
+        currSum = 0
+        currCount = 0
+        for time, size in result:
+            if (time / 500) == currTime:
+                currSum += size
+                currCount += 1
+            else:
+                currVal = (currSum * 1.0) / currCount
+                everySecond.append((currTime, currVal))
+                currTime = (time / 500)   
+                currSum = size
+        return everySecond
+        '''
+        '''
+        everySecond = []
+        currCount = 0
+        for time, size in result:
+            if (currCount % 100)==0:
+                everySecond.append((time, size))
+            currCount += 1
+        return everySecond
+        '''
 
     #return list of (time, num) where num is the occupancy of the buffer at
     # that point in time
@@ -259,6 +298,42 @@ class LinkTracker:
                 currTime = int(floor(time))
                 currSize = size
         returnValue.append((currTime, currSize))
-        return returnValue
         
+        everySecond = []
+        currVal = 0
+        currTime = 0
+        for time, size in returnValue:
+            if (time / 250) == currTime:
+                currVal = max(currVal, size)
+            else:
+                everySecond.append((currTime, currVal))
+                currTime = (time / 250)   
+                currVal = size
+        return everySecond
+
+        '''
+        everySecond = []
+        currVal = 0
+        currTime = 0
+        currSum = 0
+        currCount = 0
+        for time, size in returnValue:
+            if (time / 500) == currTime:
+                currSum += size
+                currCount += 1
+            else:
+                currVal = (currSum * 1.0) / currCount
+                everySecond.append((currTime, currVal))
+                currTime = (time / 500)   
+                currSum = size
+        return everySecond
+             
+        everySecond = []
+        currCount = 0
+        for time, size in returnValue:
+            if (currCount % 100)==0:
+                everySecond.append((time, size))
+            currCount += 1
+        return everySecond
+        '''   
 

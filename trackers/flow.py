@@ -220,8 +220,43 @@ class FlowTracker:
             result.append((since + by, throughput))
             since += by
 
-        return result
+        everySecond = []
+        currVal = 0
+        currTime = 0
+        for time, size in result:
+            if (time / 250) == currTime:
+                currVal = max(currVal, size)
+            else:
+                everySecond.append((currTime, currVal))
+                currTime = (time / 250)   
+                currVal = size
+        return everySecond
+        '''
+        everySecond = []
+        currVal = 0
+        currTime = 0
+        currSum = 0
+        currCount = 0
+        for time, size in result:
+            if (time / 500) == currTime:
+                currSum += size
+                currCount += 1
+            else:
+                currVal = (currSum * 1.0) / currCount
+                everySecond.append((currTime, currVal))
+                currTime = (time / 500)   
+                currSum = size
+        return everySecond
         
+        everySecond = []
+        currCount = 0
+        for time, size in result:
+            if (currCount % 100)==0:
+                everySecond.append((time, size))
+            currCount += 1
+        return everySecond
+        '''
+      
     def record_windowsize(self, time, size):
         '''
             record (time, size)
@@ -233,4 +268,5 @@ class FlowTracker:
         
     def get_rtt_data(self):
         return self._rtts
+        
 
